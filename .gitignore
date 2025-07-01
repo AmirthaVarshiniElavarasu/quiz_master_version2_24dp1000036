@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+
+# Flask
+instance/
+*.log
+
+# Vue.js
+node_modules/
+dist/
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Celery
+celerybeat-schedule
+*.pid
+
+# Redis dump
+dump.rdb
