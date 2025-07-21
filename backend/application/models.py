@@ -80,7 +80,7 @@ class Chapter(db.Model):
             'chap_id': self.chap_id,
             'chap_title':self.chap_title,
             'chap_description':self.chap_description,
-            'sub_name':self.subject.sub_name,
+            'sub_name':self.Subject.sub_name,
             'chap_quiz':[quiz.serialize_basic() for quiz in self.chap_quiz]
         }
     
@@ -115,7 +115,7 @@ class Quiz(db.Model):
             'quiz_description': self.quiz_description,
             'quiz_date': self.quiz_date.strftime("%Y-%m-%d %H:%M:%S"),
             'quiz_time': self.quiz_time,
-            'chap_name': self.chapter.name,
+            'chap_name': self.Chapter.chap_title,
             'total_questions': self.total_questions,
             'questions': [q.serialize() for q in self.quiz_ques]
         }
@@ -132,11 +132,11 @@ class Questions(db.Model):
     ques_id=db.Column(db.Integer,primary_key=True)
     ques_statement=db.Column(db.Text,nullable=False,unique=True)
     quiz_id=db.Column(db.Integer,db.ForeignKey('quizzes.quiz_id'),nullable=False)
-    correct_option_id=db.Column(db.Integer,db.ForeignKey('options.op_id'),nullable=True)
+    correct_option_id=db.Column(db.Integer,db.ForeignKey('options.op_id',ondelete='SET NULL'),nullable=True)
 
     # Relationship
     options=db.relationship('Option',backref='question',cascade='all,delete-orphan',lazy='dynamic',foreign_keys='Option.op_ques_id')
-    correct_option = db.relationship('Option', foreign_keys=[correct_option_id])
+    correct_option = db.relationship('Option', foreign_keys=[correct_option_id],passive_deletes=True)
 
     def serialize(self):
         return {
@@ -151,7 +151,7 @@ class Option(db.Model):
     __tablename__="options"
     op_id=db.Column(db.Integer,primary_key=True)
     op_statement=db.Column(db.Text,nullable=False)
-    op_ques_id=db.Column(db.Integer,db.ForeignKey('question.ques_id'),nullable=False)
+    op_ques_id=db.Column(db.Integer,db.ForeignKey('question.ques_id',ondelete="CASCADE"),nullable=False)
    
     
     def serialize(self):

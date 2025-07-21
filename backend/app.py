@@ -18,7 +18,7 @@ def create_app():
     app.security = Security(app,datastore)
     
     #enable CORS
-    CORS(app) 
+    CORS(app,supports_credentials=True) 
 
     with app.app_context():
      setup_database(app)
@@ -48,6 +48,10 @@ def setup_database(app):
     
 app= create_app()
 api = Api(app)
+
+@app.route('/api/hello')
+def hello():
+    return jsonify({'message': 'Hello from Flask!'})
 
 from application.routes import *
 
