@@ -80,7 +80,7 @@ class Chapter(db.Model):
             'chap_id': self.chap_id,
             'chap_title':self.chap_title,
             'chap_description':self.chap_description,
-            'sub_name':self.Subject.sub_name,
+            'sub_id':self.sub_id,
             'chap_quiz':[quiz.serialize_basic() for quiz in self.chap_quiz]
         }
     
@@ -115,7 +115,7 @@ class Quiz(db.Model):
             'quiz_description': self.quiz_description,
             'quiz_date': self.quiz_date.strftime("%Y-%m-%d %H:%M:%S"),
             'quiz_time': self.quiz_time,
-            'chap_name': self.Chapter.chap_title,
+            'chap_id': self.chap_id,
             'total_questions': self.total_questions,
             'questions': [q.serialize() for q in self.quiz_ques]
         }
@@ -140,6 +140,7 @@ class Questions(db.Model):
 
     def serialize(self):
         return {
+            'quiz_id':self.quiz_id,
             'ques_id': self.ques_id,
             'ques_statement': self.ques_statement,
             'options': [option.serialize() for option in self.options],

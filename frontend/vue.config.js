@@ -1,4 +1,3 @@
-// frontend/vue.config.js
 const path = require('path');
 
 module.exports = {
@@ -13,6 +12,15 @@ module.exports = {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './')
+      }
+    }
+  },
+  devServer: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000', // Flask backend URL
+        changeOrigin: true,
+        pathRewrite: { '^/api': '/api' }
       }
     }
   }

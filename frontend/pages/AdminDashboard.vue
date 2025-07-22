@@ -1,11 +1,11 @@
 <template>
+  <NavBar />
   <div class="dashboard">
     <h2 class="text-center">Welcome, {{ username }}</h2>
     <div v-if="subjects.length === 0" class="no-data">No subjects found.</div>
 
     <div v-for="subject in subjects" :key="subject.sub_id" class="subject-card">
       <h3>{{ subject.sub_name }}</h3>
-      <p>{{ subject.sub_Description }}</p>
 
       <button @click="toggleDescription(subject.sub_id)">
         {{ visibleDescriptions.includes(subject.sub_id) ? 'Hide' : 'Show' }} Details
@@ -13,7 +13,6 @@
 
       <div v-show="visibleDescriptions.includes(subject.sub_id)">
         <p><strong>Subject Description:</strong> {{ subject.sub_Description }}</p>
-        <p><strong>Quiz Description:</strong> {{ subject.sub_quiz_descrip }}</p>
       </div>
 
       <table class="chapter-table">
@@ -47,6 +46,7 @@
 
 <script>
 import axios from 'axios';
+import NavBar from '@/components/NavBar.vue';
 
 export default {
   name: 'AdminDashboard',
@@ -58,6 +58,9 @@ export default {
       visibleDescriptions: [],
       quizzes: [],
     };
+  },
+  components: {
+    NavBar,
   },
   methods: {
     async fetchData() {
@@ -95,10 +98,9 @@ export default {
       this.$router.push({ name: 'EditChapter', params: { chap_id: chapter.chap_id } });
     },
     deleteChapter(chapter) {
-      if (confirm(`Are you sure you want to delete "${chapter.chap_title}"?`)) {
+      if (confirm(`Are you sure you want to delete "${chapter.chap_title} ${chapter.chap_id}"?`)) {
         const token = localStorage.getItem('token');
-        axios
-          .delete(`/api/chapters/${chapter.chap_id}`, {
+        axios.delete(`/api/chapters/${chapter.chap_id}`, {
             headers: {
               'Authentication-Token': token,
             },
@@ -108,7 +110,11 @@ export default {
           })
           .catch((err) => {
             console.error('Failed to delete chapter:', err);
-            alert('Error deleting chapter.');
+              if (err.response && err.response.data && err.response.data.message) {
+                   alert(`Error: ${err.response.data.message}`);} 
+              else {
+                    alert('Error deleting chapter.');
+                  }
           });
       }
     },

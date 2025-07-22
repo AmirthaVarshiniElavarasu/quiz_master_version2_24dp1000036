@@ -55,7 +55,6 @@ def hello():
 
 from application.routes import *
 
-app.register_blueprint(main_routes)
 
 register_routes(api)
 

@@ -1,8 +1,8 @@
-from flask import Blueprint,jsonify,request,make_response
-from flask_security import auth_required,roles_required,current_user,utils,auth_token_required
+from flask import jsonify,request,make_response
+from flask_security import auth_required,roles_required,current_user,utils,auth_token_required,roles_accepted
 from .database import db
 from .userdb import datastore
-from .models import Subject,Chapter,Quiz,Questions,Option,Scores
+from .models import User,Subject,Chapter,Quiz,Questions,Option,Scores
 from datetime import datetime
 from flask_restful import Resource,reqparse
 
@@ -32,7 +32,7 @@ question_parser.add_argument('correct_option_id', type=int, required=True, help=
 question_parser.add_argument('quiz_id', type=int, required=True, help="Quiz ID is required")
 question_parser.add_argument('options', type=list, location='json', required=True, help="Options are required")
 
-main_routes=Blueprint('main_routes',__name__)
+
 
 def roles_list(roles):
     role_list=[]
@@ -149,7 +149,8 @@ class Login(Resource):
             'message':'Login Successfully',
             'user':{
                 'email': user.email,
-                'roles':[role.name for role in user.roles] 
+                'roles':[role.name for role in user.roles],
+                'username' : user.username
             },
             'auth_token':auth_token
         },200
@@ -267,6 +268,7 @@ class ChapterResource(Resource):
     @auth_token_required
     @roles_required('admin')
     def delete(self, chap_id):
+        
         chapter = Chapter.query.get_or_404(chap_id)
         if chapter.chap_quiz:
             return {"message": "Please delete the quizzes under this chapter first"}, 400
@@ -413,6 +415,152 @@ class QuestionResource(Resource):
         db.session.commit()
         return {"message": "Question deleted successfully"}, 200
 
+
+class SearchResource(Resource):
+    @auth_required('token')
+    @roles_accepted('admin', 'user')
+    def get(self):
+        query = request.args.get("q", "").strip()
+        source = request.args.get("source", "").strip()
+
+        if not query:
+            return jsonify({"error": "Empty search query"}), 400
+
+        role = "admin" if "admin" in roles_list(current_user.roles) else "user"
+        user_id = current_user.id
+
+        # Initial result containers
+        user_results, quiz_results, subject_results, chapter_results, scores_results = [], [], [], [], []
+        users, subjects, quizzes, chapters, scores = [], [], [], [], []
+
+        if source == "admin-navbar" and role == "admin":
+            if query.lower().startswith("user"):
+                users = User.query.all()
+            if query.lower().startswith("subject"):
+                subjects = Subject.query.all()
+            if query.lower().startswith("quiz"):
+                quizzes = Quiz.query.all()
+            if query.lower().startswith("chapter"):
+                chapters = Chapter.query.all()
+            if query.lower().startswith("score"):
+                scores = Scores.query.all()
+
+            user_results = User.query.filter(
+                User.id.like(f"%{query}%") |
+                User.username.ilike(f"%{query}%") |
+                User.gender.ilike(f"%{query}%") |
+                User.email.ilike(f"%{query}%")
+            ).all()
+
+            quiz_results = Quiz.query.filter(
+                Quiz.quiz_id.like(f"%{query}%") |
+                Quiz.quiz_title.ilike(f"%{query}%")
+            ).all()
+
+            subject_results = Subject.query.filter(
+                Subject.sub_id.like(f"%{query}%") |
+                Subject.sub_name.ilike(f"%{query}%")
+            ).all()
+
+            chapter_results = Chapter.query.filter(
+                Chapter.chap_id.like(f"%{query}%") |
+                Chapter.chap_title.ilike(f"%{query}%")
+            ).all()
+
+        elif source == "user-navbar" and role == "user":
+            if query.lower().startswith("subject"):
+                subjects = Subject.query.all()
+            if query.lower().startswith("quiz"):
+                quizzes = Quiz.query.all()
+            if query.lower().startswith("chapter"):
+                chapters = Chapter.query.all()
+            if query.lower().startswith("score"):
+                scores = Scores.query.filter_by(user_score_id=user_id).all()
+
+            quiz_results = Quiz.query.filter(
+                Quiz.quiz_id.like(f"%{query}%") |
+                Quiz.quiz_title.ilike(f"%{query}%")
+            ).all()
+
+            subject_results = Subject.query.filter(
+                Subject.sub_id.like(f"%{query}%") |
+                Subject.sub_name.ilike(f"%{query}%")
+            ).all()
+
+            chapter_results = Chapter.query.filter(
+                Chapter.chap_id.like(f"%{query}%") |
+                Chapter.chap_title.ilike(f"%{query}%")
+            ).all()
+
+            scores_results = Scores.query.filter(
+                Scores.user_score_id == user_id,
+                (Scores.quiz_score_id.like(f"%{query}%") |
+                 Scores.score_total.like(f"%{query}%"))
+            ).all()
+
+        results = {
+            "Users": [{
+                "Id": u.id,
+                "Username": u.username,
+                "Email": u.email,
+                "Qualification": u.qualification,
+                "Gender": u.gender,
+                "Date_of_Birth": u.dob.strftime('%d-%m-%Y')
+            } for u in users],
+            "Subjects": [{
+                "Subject_Id": s.sub_id,
+                "Subject_Name": s.sub_name
+            } for s in subjects],
+            "Quizzes": [{
+                "Quiz_Id": q.quiz_id,
+                "Quiz_Title": q.quiz_title,
+                "Quiz_Chapter_Id": q.chap_id,
+                "Quiz_Start_Date": q.quiz_date,
+                "Quiz_Duration": q.quiz_time
+            } for q in quizzes],
+            "Chapters": [{
+                "Chapter_Id": c.chap_id,
+                "Chapter_Title": c.chap_title
+            } for c in chapters],
+            "Scores": [{
+                "User_Id": sc.user_score_id,
+                "Quiz_Id": sc.quiz_score_id,
+                "score_id": sc.score_id,
+                "Total_Score": sc.score_total
+            } for sc in scores],
+            "User": [{
+                "Id": u.id,
+                "Username": u.username,
+                "Email": u.email,
+                "Qualification": u.qualification,
+                "Gender": u.gender,
+                "Date_of_Birth": u.dob.strftime('%d-%m-%Y')
+            } for u in user_results],
+            "Quiz": [{
+                "Quiz_Id": q.quiz_id,
+                "Quiz_Title": q.quiz_title,
+                "Quiz_Chapter_Id": q.chap_id,
+                "Quiz_Start_Date": q.quiz_date,
+                "Quiz_Duration": q.quiz_time
+            } for q in quiz_results],
+            "Subject": [{
+                "Subject_Id": s.sub_id,
+                "Subject_Name": s.sub_name
+            } for s in subject_results],
+            "Chapter": [{
+                "Chapter_Id": c.chap_id,
+                "Chapter_Title": c.chap_title
+            } for c in chapter_results],
+            "Score": [{
+                "Quiz_Id": sc.quiz_score_id,
+                "score_id": sc.score_id,
+                "Total_Score": sc.score_total
+            } for sc in scores_results]
+        }
+
+        return jsonify(results)
+
+
 def register_routes(api):
     api.add_resource(AdminHome,'/api/admin_dashboard')
     api.add_resource(UserHome,'/api/user_dashboard')
@@ -423,3 +571,4 @@ def register_routes(api):
     api.add_resource(ChapterResource,'/api/chapters','/api/chapters/<int:chap_id>')
     api.add_resource(QuizResource,'/api/quizzes','/api/quizzes/<int:quiz_id>')
     api.add_resource(QuestionResource,'/api/questions','/api/questions/<int:question_id>')
+    api.add_resource(SearchResource, '/api/search')
