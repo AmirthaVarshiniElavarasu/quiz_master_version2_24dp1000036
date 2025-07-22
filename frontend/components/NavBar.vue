@@ -2,12 +2,12 @@
   <div class="navbar-container">
     <nav class="navbar_comp" :class="role">
       <div class="home">
-        <router-link v-if="role === 'admin'" to="/api/admin_dashboard">Home</router-link>
-        <router-link v-if="role === 'user'" to="/api/user_dashboard">Home</router-link>
+        <router-link v-if="role === 'admin'" to="/admin_dashboard">Home</router-link>
+        <router-link v-if="role === 'user'" to="/user_dashboard">Home</router-link>
       </div>
 
       <div class="quiz" v-if="role === 'admin'">
-        <router-link to="'/api/quizzes'">Quiz</router-link>
+        <router-link to="/quizzes">Quiz</router-link>
       </div>
 
       <div class="summary" v-if="role === 'admin'">
@@ -59,15 +59,37 @@ export default {
   mounted() {
     this.role = localStorage.getItem('role') || 'user';
     this.username = localStorage.getItem('username') || 'Guest';
-    console.log(this.username)
   },
   methods: {
-    logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('username');
-      this.$router.push('/');
-    },
+   async logout() {
+      const token = localStorage.getItem('token');
+
+      try {
+        const res = await fetch('http://localhost:5000/api/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authentication-Token': token,
+          },
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || `Logout failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log(data.message); // Optional: success message
+      } catch (error) {
+        console.error('Logout error:', error.message); // Optional: show error message
+      } finally {
+        // Always clear localStorage and navigate away
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('username');
+        this.$router.push('/');
+      }
+},
     async search() {
       if (this.searchQuery.trim() === '') {
         this.results = [];

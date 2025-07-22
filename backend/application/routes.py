@@ -567,7 +567,7 @@ def register_routes(api):
     api.add_resource(Registration,'/api/registration')
     api.add_resource(Login,'/api/login')
     api.add_resource(Logout, '/api/logout')
-    api.add_resource(SubjectResource, '/api/admin/subject','/api/admin/subject/<int:sub_id>')
+    api.add_resource(SubjectResource, '/api/subject','/api/subject/<int:sub_id>')
     api.add_resource(ChapterResource,'/api/chapters','/api/chapters/<int:chap_id>')
     api.add_resource(QuizResource,'/api/quizzes','/api/quizzes/<int:quiz_id>')
     api.add_resource(QuestionResource,'/api/questions','/api/questions/<int:question_id>')
