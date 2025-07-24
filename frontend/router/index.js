@@ -4,6 +4,8 @@ import Login from '../pages/LoginPage.vue';
 import Registration from '../pages/RegistrationPage.vue';
 import AdminDashboard from '../pages/AdminDashboard.vue';
 import UserDashboard from '../pages/UserDashboard.vue';
+import QuizDashboard from '../pages/QuizDashboard.vue';
+import QuestionsPage from '../pages/QuestionsPage.vue';
 
 
 const routes = [
@@ -11,7 +13,9 @@ const routes = [
     { path: '/login', name: 'Login', component: Login},
     { path: '/register', name: 'Registration', component: Registration},
     { path: '/admin_dashboard', name: 'AdminDashboard', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin' }},
-    { path: '/user_dashboard', name: 'UserDashboard', component: UserDashboard, meta: { requiresAuth: true, role: 'user'}}
+    { path: '/user_dashboard', name: 'UserDashboard', component: UserDashboard, meta: { requiresAuth: true, role: 'user'}},
+    { path: '/quiz_dashboard', name: 'QuizDashboard', component: QuizDashboard, meta: { requiresAuth: true, role: 'admin'}},
+    { path: '/questions/:quiz_id', name: 'Questions', component: QuestionsPage, meta: { requiresAuth: true, role: 'admin'}}
 ];
 
 const router = createRouter({

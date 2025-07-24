@@ -168,7 +168,7 @@ class SubjectResource(Resource):
     @roles_required('admin')
     def get(self, sub_id=None):
         if sub_id:
-            subjects = Chapter.query.get_or_404(sub_id)
+            subjects = Subject.query.get_or_404(sub_id)
             return subjects.serialize(), 200
        
         subjects = Subject.query.all()
@@ -215,7 +215,6 @@ class SubjectResource(Resource):
         db.session.delete(subject)
         db.session.commit()
         return {'message': f'Subject {subject.sub_name} deleted successfully'}, 200
-
 
 
 class ChapterResource(Resource):
@@ -287,13 +286,13 @@ class QuizResource(Resource):
             quiz = Quiz.query.get_or_404(quiz_id)
             return quiz.serialize(), 200
         else:
-            quizzes = Quiz.query.order_by(Quiz.quiz_id.desc()).all()
+            quizzes = Quiz.query.order_by(Quiz.quiz_id.asc()).all()
+            chapter = Chapter.query.order_by(Chapter.chap_id.asc()).all()
             quiz_list = [q.serialize() for q in quizzes]
-
-           
-            
+            chap_list = [c.serialize() for c in chapter]
             return {
                  'quizzes': quiz_list,
+                 'chapters': chap_list
                  }, 200
 
     @auth_token_required
@@ -347,6 +346,7 @@ class QuizResource(Resource):
         db.session.delete(quiz)
         db.session.commit()
         return {'message': f"{quiz.quiz_title} deleted successfully."}, 200
+
 
 class QuestionResource(Resource):
     @auth_token_required
@@ -560,6 +560,44 @@ class SearchResource(Resource):
 
         return jsonify(results)
 
+class Quizview(Resource):
+    @auth_token_required
+    @roles_accepted('admin', 'user')
+    def get(self, sub_id, chap_id):
+        # Logic to fetch and return quiz view data
+        subject = Subject.query.get_or_404(sub_id)
+        chapter = Chapter.query.get_or_404(chap_id)
+       
+        
+        if not subject or not chapter:
+            return {'error': 'Subject or Chapter not found'}, 404
+
+        return {
+            'subject': {
+                'sub_id': subject.sub_id,
+                'sub_name': subject.sub_name,
+                'sub_Description':subject.sub_Description,
+            },
+            'chapter': {
+                'chap_id': chapter.chap_id,
+                'chap_title': chapter.chap_title,
+                'chap_description':chapter.chap_description,
+            }
+        }, 200
+
+class QuestionsPage(Resource):
+    @auth_required('token')
+    @roles_accepted('admin', 'user')
+    def get(self, quiz_id):
+        questions = Questions.query.filter_by(quiz_id=quiz_id).all()
+        if not questions:
+            return {'error': 'Questions not found'}, 404
+        
+        return {
+            'questions': [q.serialize() for q in questions]
+        }, 200
+
+
 
 def register_routes(api):
     api.add_resource(AdminHome,'/api/admin_dashboard')
@@ -572,3 +610,6 @@ def register_routes(api):
     api.add_resource(QuizResource,'/api/quizzes','/api/quizzes/<int:quiz_id>')
     api.add_resource(QuestionResource,'/api/questions','/api/questions/<int:question_id>')
     api.add_resource(SearchResource, '/api/search')
+    api.add_resource(Quizview, '/api/quizview/<int:sub_id>/<int:chap_id>')
+    api.add_resource(QuestionsPage,'/api/questions_page/<int:quiz_id>')
+

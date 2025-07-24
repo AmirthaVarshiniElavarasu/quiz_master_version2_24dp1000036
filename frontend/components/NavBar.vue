@@ -7,7 +7,7 @@
       </div>
 
       <div class="quiz" v-if="role === 'admin'">
-        <router-link to="/quizzes">Quiz</router-link>
+        <router-link to="/quiz_dashboard">Quiz</router-link>
       </div>
 
       <div class="summary" v-if="role === 'admin'">

@@ -9,6 +9,7 @@
       <input v-model="gender" placeholder="Gender" />
       <input v-model="dob" type="date" required />
       <button type="submit">Register</button>
+      <router-link to="/login">Login</router-link>
     </form>
     <p>{{ message }}</p>
   </div>
