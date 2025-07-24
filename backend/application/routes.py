@@ -3,8 +3,9 @@ from flask_security import auth_required,roles_required,current_user,utils,auth_
 from .database import db
 from .userdb import datastore
 from .models import User,Subject,Chapter,Quiz,Questions,Option,Scores
-from datetime import datetime
+from datetime import datetime,timezone
 from flask_restful import Resource,reqparse
+from sqlalchemy import desc
 
 
 # subject
@@ -587,16 +588,76 @@ class Quizview(Resource):
 
 class QuestionsPage(Resource):
     @auth_required('token')
-    @roles_accepted('admin', 'user')
+    @roles_accepted('admin','user')
     def get(self, quiz_id):
+        user=current_user
+        quizzes = Quiz.query.get_or_404(quiz_id)
         questions = Questions.query.filter_by(quiz_id=quiz_id).all()
         if not questions:
             return {'error': 'Questions not found'}, 404
         
         return {
-            'questions': [q.serialize() for q in questions]
+            'questions': [q.serialize() for q in questions],
+            'quizzes' : quizzes.serialize(),
+            'user': user.serialize()
+        }, 200
+    
+class QuizSubmission(Resource):
+    @auth_required('token')
+    @roles_required('user')
+    def post(self, quiz_id):
+        
+        quiz = Quiz.query.get_or_404(quiz_id)
+        questions = Questions.query.filter_by(quiz_id=quiz_id).all()
+
+        correctAnswer = {str(q.ques_id): q.correct_option for q in questions}
+        No_of_quest = len(quiz.quiz_ques)
+
+        userAnswers = request.get_json()
+        if not userAnswers:
+            total=0
+
+        total = 0
+        for ques_id, correct_ans in correctAnswer.items():
+            if ques_id not in userAnswers:
+                userAnswers[ques_id] = "none"
+            if userAnswers[ques_id] == correct_ans.op_statement:
+                total += 1
+
+        time = datetime.now(timezone.utc)
+        new_score = Scores(
+            quiz_score_id=quiz_id,
+            user_score_id=current_user.id,
+            score_time_stamp=time,
+            score_total=total,
+            No_of_question=No_of_quest
+        )
+        db.session.add(new_score)
+        db.session.commit()
+
+        return {
+            "message": "Quiz submitted successfully",
+            "quiz_id": quiz_id,
+            "data": userAnswers,
+            "score": {
+                "score_total": total,
+                "No_of_question": No_of_quest,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+            },
+            
         }, 200
 
+class ScorePage(Resource):
+    @auth_required('token')
+    @roles_accepted('admin','user')
+    def get(self,user_id=None):
+        
+        if user_id:
+            scores = Scores.query.order_by(desc(Scores.score_total)).limit(10).all()
+            return scores.serialize(),200
+        else:
+            scores =Scores.query.filter_by(user_score_id=user_id)
+            return scores.serialize(),200
 
 
 def register_routes(api):
@@ -612,4 +673,6 @@ def register_routes(api):
     api.add_resource(SearchResource, '/api/search')
     api.add_resource(Quizview, '/api/quizview/<int:sub_id>/<int:chap_id>')
     api.add_resource(QuestionsPage,'/api/questions_page/<int:quiz_id>')
+    api.add_resource(QuizSubmission,'/api/quiz_submission/<int:quiz_id>')
+    api.add_resource(ScorePage,'/api/score_page/<int:user_id>')
 

@@ -40,7 +40,7 @@ class User(db.Model, UserMixin):
             'username':self.username,
             'qualification':self.qualification,
             'gender':self.gender,
-            'dob':self.dob
+            'dob':str(self.dob)
         }
 
 # Subject Model
