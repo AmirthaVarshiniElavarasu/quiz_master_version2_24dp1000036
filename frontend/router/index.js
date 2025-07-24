@@ -8,6 +8,8 @@ import QuizDashboard from '../pages/QuizDashboard.vue';
 import QuestionsPage from '../pages/QuestionsPage.vue';
 import UserScore from '../pages/UserScore.vue';
 import UserQuiz from '../pages/UserQuiz.vue';
+import SummaryPage from '../pages/SummaryPage.vue';
+import UnauthorizedPage from '../pages/UnauthorizedPage.vue';
 
 
 const routes = [
@@ -19,7 +21,9 @@ const routes = [
     { path: '/quiz_dashboard', name: 'QuizDashboard', component: QuizDashboard, meta: { requiresAuth: true, role: 'admin'}},
     { path: '/questions/:quiz_id', name: 'Questions', component: QuestionsPage, meta: { requiresAuth: true, role: 'admin'}},
     { path: '/user/score/:id', name: 'UserScore', component: UserScore, meta: { requiresAuth: true, role: 'user'}},
-    { path: '/user/startquiz/:quiz_id', name: 'UserQuiz', component: UserQuiz, meta: { requiresAuth: true, role: 'user'}}
+    { path: '/user/startquiz/:quiz_id', name: 'UserQuiz', component: UserQuiz, meta: { requiresAuth: true, role: 'user'}},
+    { path: '/Summary_dashboard', name: 'SummaryPage ', component: SummaryPage, meta: {requiresAuth: true, allowedRoles: ['admin', 'user']}},
+    { path: '/unauthorized', name: 'Unauthorized', component: UnauthorizedPage }
 ];
 
 const router = createRouter({
@@ -28,18 +32,21 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
 
-    if (to.meta.requiresAuth){
-        if(!token){
-            return next('/login');
-        }
-        if (to.meta.role && to.meta.role !==role){
-            return next('/');
-        }
+  if (to.meta.requiresAuth) {
+    if (!token) {
+      return next('/login');
     }
-    next();
+
+    if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(role)) {
+      return next('/unauthorized'); 
+    }
+  }
+
+  next();
 });
+
 
 export default router;

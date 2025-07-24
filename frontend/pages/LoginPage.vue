@@ -42,6 +42,7 @@ export default {
           const userRole = data.user.roles[0];
           localStorage.setItem('role', userRole);
           localStorage.setItem('username',data.user.username)
+          localStorage.setItem('user_id',data.user.user_id)
 
           // Redirect based on role
           if (userRole === 'admin') {

@@ -2,10 +2,11 @@ from flask import jsonify,request,make_response
 from flask_security import auth_required,roles_required,current_user,utils,auth_token_required,roles_accepted
 from .database import db
 from .userdb import datastore
-from .models import User,Subject,Chapter,Quiz,Questions,Option,Scores
+from .models import User,Subject,Chapter,Quiz,Questions,Option,Scores,Role
 from datetime import datetime,timezone
 from flask_restful import Resource,reqparse
-from sqlalchemy import desc
+from sqlalchemy import desc,func
+import random,calendar
 
 
 # subject
@@ -33,6 +34,59 @@ question_parser.add_argument('correct_option_id', type=int, required=True, help=
 question_parser.add_argument('quiz_id', type=int, required=True, help="Quiz ID is required")
 question_parser.add_argument('options', type=list, location='json', required=True, help="Options are required")
 
+def generate_color():
+    return "#{:06x}".format(random.randint(0,0XFFFFFF))
+
+def get_user_attempts_by_subject():
+    user_attempts = (
+        db.session.query(
+            Subject.sub_name,
+            db.func.count(db.func.distinct(Scores.user_score_id)).label("user_attempts")  # Unique users per subject
+        )
+        .join(Chapter, Subject.sub_id == Chapter.sub_id)
+        .join(Quiz, Chapter.chap_id == Quiz.chap_id)
+        .join(Scores, Quiz.quiz_id == Scores.quiz_score_id)
+        .group_by(Subject.sub_name)
+        .all()
+    )
+    return user_attempts
+
+def get_total_scores_by_subject():
+    total_scores = (
+        db.session.query(Subject.sub_name,db.func.max(Scores.score_total).label("total_score"))
+        .join(Chapter, Subject.sub_id == Chapter.sub_id)
+        .join(Quiz, Chapter.chap_id == Quiz.chap_id)
+        .join(Scores, Quiz.quiz_id == Scores.quiz_score_id)
+        .group_by(Subject.sub_name)
+        .all()
+    )
+    return total_scores
+
+def get_no_of_subject_by_quiz(user_id):
+    Quiz_subjects=(
+        db.session.query(
+            Subject.sub_name,
+            db.func.count(db.func.distinct(Scores.quiz_score_id)).label("no_of_quiz")  # Unique quiz per subject
+        )
+        .join(Chapter, Subject.sub_id == Chapter.sub_id)
+        .join(Quiz, Chapter.chap_id == Quiz.chap_id)
+        .join(Scores, Quiz.quiz_id == Scores.quiz_score_id)
+        .filter(Scores.user_score_id ==user_id)
+        .group_by(Subject.sub_name)
+        .all())
+    return Quiz_subjects
+
+def get_no_of_attempts_by_month(user_id):
+    quiz_attempt=(
+        db.session.query(
+            db.func.extract('year',Scores.score_time_stamp).label('year'),
+            db.func.extract('month',Scores.score_time_stamp).label('month'),
+            db.func.count(db.func.distinct(Scores.quiz_score_id)).label("no_of_quiz"))
+            .filter(Scores.user_score_id==user_id)
+            .group_by('year', 'month')
+            .order_by('year', 'month')
+            .all())
+    return quiz_attempt
 
 
 def roles_list(roles):
@@ -45,8 +99,7 @@ class AdminHome(Resource):
     @auth_required('token')
     @roles_required('admin')
     def get(self):
-        user = current_user
-    
+        
         subjects = Subject.query.all()
         chapters = Chapter.query.all()
         quizzes = Quiz.query.all()
@@ -55,7 +108,8 @@ class AdminHome(Resource):
             'subjects': [s.serialize() for s in subjects],
             'chapters': [c.serialize() for c in chapters],
             'quizzes': [q.serialize() for q in quizzes],
-            'user': user.username
+            
+            
         }
     
 class UserHome(Resource):
@@ -75,7 +129,6 @@ class UserHome(Resource):
             'quizzes': [q.serialize() for q in quizzes],
             
         },200
-
 
 class Registration(Resource):
     def post(self):
@@ -119,7 +172,6 @@ class Registration(Resource):
             }
         }, 201
 
-
 class Login(Resource):
     def post(self):
         login_credentials = request.get_json()
@@ -151,7 +203,8 @@ class Login(Resource):
             'user':{
                 'email': user.email,
                 'roles':[role.name for role in user.roles],
-                'username' : user.username
+                'username' : user.username,
+                'user_id': user.id
             },
             'auth_token':auth_token
         },200
@@ -217,7 +270,6 @@ class SubjectResource(Resource):
         db.session.commit()
         return {'message': f'Subject {subject.sub_name} deleted successfully'}, 200
 
-
 class ChapterResource(Resource):
     # GET: Get all chapters or one chapter by id
     @auth_token_required
@@ -276,8 +328,6 @@ class ChapterResource(Resource):
         db.session.delete(chapter)
         db.session.commit()
         return {"message": f"Chapter '{chapter.chap_title}' deleted successfully"}, 200
-
-
 
 class QuizResource(Resource):
     @auth_token_required
@@ -348,7 +398,6 @@ class QuizResource(Resource):
         db.session.commit()
         return {'message': f"{quiz.quiz_title} deleted successfully."}, 200
 
-
 class QuestionResource(Resource):
     @auth_token_required
     @roles_required('admin')
@@ -415,7 +464,6 @@ class QuestionResource(Resource):
         db.session.delete(question)
         db.session.commit()
         return {"message": "Question deleted successfully"}, 200
-
 
 class SearchResource(Resource):
     @auth_required('token')
@@ -649,15 +697,95 @@ class QuizSubmission(Resource):
 
 class ScorePage(Resource):
     @auth_required('token')
-    @roles_accepted('admin','user')
-    def get(self,user_id=None):
-        
+    @roles_accepted('admin', 'user')
+    def get(self, user_id=None):
         if user_id:
-            scores = Scores.query.order_by(desc(Scores.score_total)).limit(10).all()
-            return scores.serialize(),200
+            scores = Scores.query.filter_by(user_score_id=user_id)\
+                                 .order_by(desc(Scores.score_total))\
+                                 .limit(10).all()
+            return [s.serialize() for s in scores], 200
         else:
-            scores =Scores.query.filter_by(user_score_id=user_id)
-            return scores.serialize(),200
+            return {'message': 'User ID is required'}, 400
+
+class SummaryDashboard(Resource):
+    @auth_required('token')
+    @roles_accepted('admin', 'user')
+    def get(self):
+        user_role = roles_list(current_user.roles)
+
+        def get_leaderboard(role_name):
+            top_users = (
+                db.session.query(
+                    User.id,
+                    User.username,
+                    func.sum(Scores.score_total).label('total_score')
+                )
+                .join(Scores, Scores.user_score_id == User.id)
+                .join(User.roles)
+                .filter(Role.name == role_name)
+                .group_by(User.id)
+                .order_by(desc('total_score'))
+                .limit(10)
+                .all()
+            )
+            return [
+                {"id": user.id, "username": user.username, "total_score": int(user.total_score)}
+                for user in top_users
+            ]
+
+        if 'admin' in user_role:
+            # Admin summary
+            users = User.query.all()
+            total_scores = Scores.query.all()
+            subject_scores = get_total_scores_by_subject()
+            subject_attempt = get_user_attempts_by_subject()
+
+            bar_data = [
+                {"subject": subject, "score": score, "color": generate_color()}
+                for subject, score in subject_scores
+            ]
+            pie_data = [
+                {"subject": subject, "attempts": attempts, "color": generate_color()}
+                for subject, attempts in subject_attempt
+            ]
+            leaderboard = get_leaderboard('user')  # Admin sees leaderboard of users
+
+            return jsonify({
+                "role": "admin",
+                "total_users": len(users),
+                "total_scores": len(total_scores),
+                "bar_data": bar_data,
+                "pie_data": pie_data,
+                "leaderboard": leaderboard
+            })
+
+        else:
+            # User summary
+            user_id = current_user.id
+            subject_scores = get_no_of_subject_by_quiz(user_id)
+            quiz_attempts = get_no_of_attempts_by_month(user_id)
+
+            bar_data = [
+                {"subject": subject, "attempts": attempts, "color": generate_color()}
+                for subject, attempts in subject_scores
+            ]
+            pie_data = [
+                {
+                    "month": f"{calendar.month_name[month]} {year}",
+                    "attempts": attempts,
+                    "color": generate_color()
+                }
+                for year, month, attempts in quiz_attempts
+            ]
+            leaderboard = get_leaderboard('user')  # Users also see top user scores
+
+            return jsonify({
+                "role": "user",
+                "bar_data": bar_data,
+                "pie_data": pie_data,
+                "leaderboard": leaderboard
+            })
+
 
 
 def register_routes(api):
@@ -675,4 +803,6 @@ def register_routes(api):
     api.add_resource(QuestionsPage,'/api/questions_page/<int:quiz_id>')
     api.add_resource(QuizSubmission,'/api/quiz_submission/<int:quiz_id>')
     api.add_resource(ScorePage,'/api/score_page/<int:user_id>')
+    api.add_resource(SummaryDashboard, '/api/summary_page')
+
 

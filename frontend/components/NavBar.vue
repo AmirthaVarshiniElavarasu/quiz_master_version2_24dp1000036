@@ -11,11 +11,11 @@
       </div>
 
       <div class="score" v-if="role === 'user'">
-       <router-link to="/user_score">Score</router-link>
+       <router-link :to="`/user/score/${user_id}`">Score</router-link>
       </div>
 
       <div class="summary">
-        <router-link to="/summary">Summary</router-link>
+        <router-link to="/Summary_dashboard">Summary</router-link>
       </div>
 
       <div class="logout">
@@ -43,6 +43,7 @@ export default {
     return {
       role: '',
       username: '',
+      user_id:'',
       searchQuery: '',
       results: [],
     };
@@ -63,6 +64,7 @@ export default {
   mounted() {
     this.role = localStorage.getItem('role') || 'user';
     this.username = localStorage.getItem('username') || 'Guest';
+    this.user_id = localStorage.getItem('user_id') || 0;
   },
   methods: {
    async logout() {
