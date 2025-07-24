@@ -137,28 +137,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.question-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-.question-table th,
-.question-table td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: left;
-}
-.question-table ul {
-  list-style: disc;
-  padding-left: 20px;
-}
-button {
-  margin: 2px;
-  padding: 4px 10px;
-}
-.add-button {
-  margin-top: 20px;
-  text-align: right;
-}
-</style>

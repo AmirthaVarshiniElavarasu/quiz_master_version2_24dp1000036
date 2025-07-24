@@ -1,0 +1,268 @@
+/* Global base styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+/* Global heading styles */
+h1, h2, h3 {
+  font-family: Arial, sans-serif;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+/* Global table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  margin-top: 1rem;
+  margin-bottom: 5rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #eef;
+}
+
+/* Landing Page styles */
+.Landingpage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+button {
+  padding: 0.75rem 1.5rem;
+  margin: 0 .5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background-color: #143D60;
+  color: white;
+  transition: background-color 0.3s;
+  margin-top: 20px;
+  padding: 8px 16px;
+}
+
+button:hover {
+  background-color: #0f2e4a;
+}
+
+.login-page,
+.RegisterationPage {
+  max-width: 400px;
+  margin: 100px auto;
+  text-align: center;
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 8px;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.summary-page,
+#userdashboard,
+.dashboard,
+.container,
+.question-page {
+  padding: 2rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.subject-card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border-radius: 10px;
+}
+
+.chapter-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.chapter-table th,
+.chapter-table td {
+  border: 1px solid #aaa;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.no-data {
+  color: red;
+  font-weight: bold;
+}
+
+.quiz-wrapper {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+.question-box {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.options label {
+  display: block;
+  margin: 5px 0;
+}
+
+.submit-controls {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.time-over {
+  margin-top: 30px;
+  color: red;
+  font-weight: bold;
+  text-align: center;
+}
+
+.score-container {
+  text-align: center;
+}
+
+.user-score-table {
+  margin: auto;
+  border-collapse: collapse;
+  width: 80%;
+}
+
+.user-score-table th,
+.user-score-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.user-score-table th {
+  background-color: #f2f2f2;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-box {
+  background: white;
+  padding: 16px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;         
+  overflow-y: auto;         
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+textarea {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

@@ -193,36 +193,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.dashboard {
-  padding: 2rem;
-}
-.text-center {
-  text-align: center;
-}
-.subject-card {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  border-radius: 10px;
-}
-.chapter-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-.chapter-table th,
-.chapter-table td {
-  border: 1px solid #aaa;
-  padding: 0.5rem;
-  text-align: left;
-}
-button {
-  margin-right: 0.5rem;
-  margin-top: 0.5rem;
-}
-.no-data {
-  color: red;
-  font-weight: bold;
-}
-</style>

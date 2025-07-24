@@ -26,7 +26,7 @@
         <input type="search" v-model="searchQuery" @input="search" placeholder="Search here"/>
       </div>
 
-      <div id="welcome">User: {{ username }}</div>
+      <div id="welcome">USER: {{ username }}</div>
     </nav>
 
     <div class="search-results" v-if="results.length > 0">
@@ -202,6 +202,11 @@ export default {
 .search-results h3 {
   color: white !important;
   margin-top: 10px;
+}
+#welcome{
+  font-size: 20px;
+  font-weight: bold;
+
 }
 
 @media (max-width: 768px) {

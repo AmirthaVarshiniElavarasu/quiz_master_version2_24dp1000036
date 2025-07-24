@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="RegisterationPage">
     <h2>Register</h2>
     <form @submit.prevent="register">
       <input v-model="email" placeholder="Email" required />
@@ -9,7 +9,7 @@
       <input v-model="gender" placeholder="Gender" />
       <input v-model="dob" type="date" required />
       <button type="submit">Register</button>
-      <router-link to="/login">Login</router-link>
+      <router-link to="/login"><button>Login</button></router-link>
     </form>
     <p>{{ message }}</p>
   </div>

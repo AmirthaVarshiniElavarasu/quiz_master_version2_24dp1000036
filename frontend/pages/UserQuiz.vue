@@ -144,48 +144,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.quiz-wrapper {
-  max-width: 800px;
-  margin: auto;
-  padding: 20px;
-}
-.question-box {
-  margin-bottom: 20px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-.options label {
-  display: block;
-  margin: 5px 0;
-}
-.submit-controls {
-  margin-top: 20px;
-  display: flex;
-  gap: 15px;
-}
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.popup-box {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-}
-.time-over {
-  margin-top: 30px;
-  color: red;
-  font-weight: bold;
-  text-align: center;
-}
-</style>
+

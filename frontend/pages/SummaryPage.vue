@@ -1,11 +1,9 @@
 <template>
     <NavBar/>
   <div class="summary-page">
-    <h2>Summary Dashboard</h2>
-
     <div v-if="isAdmin || isUser">
-      <h3 class="text-lg font-semibold mb-2">Top 10 Leaderboard</h3>
-      <table class="table-auto w-full border-collapse border">
+      <h3>Top 10 Leaderboard</h3>
+      <table class="leaderboard-table">
         <thead>
           <tr>
             <th>Rank</th>
@@ -160,10 +158,8 @@ export default {
 </script>
 
 <style scoped>
-.summary-page {
-  max-width: 900px;
-  margin: auto;
-}
+
+
 .chart-container {
     display: flex;
     justify-content: space-around;
@@ -177,4 +173,6 @@ export default {
     max-width: 600px;
     height: 100%;
 }
+
+
 </style>

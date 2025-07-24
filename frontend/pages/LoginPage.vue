@@ -4,8 +4,10 @@
     <form @submit.prevent="handleLogin">
       <input type="email" v-model="email" placeholder="Email" required />
       <input type="password" v-model="password" placeholder="Password" required />
+      <div>
       <button type="submit">Login</button> 
-      <router-link to="/register">Register</router-link>
+      <router-link to="/register"><button>Register </button></router-link>
+      </div>
     </form>
     <p v-if="message">{{ message }}</p>
   </div>
@@ -64,19 +66,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.login-page {
-  max-width: 400px;
-  margin: 100px auto;
-  text-align: center;
-}
-input {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
-  padding: 8px;
-}
-button {
-  padding: 10px 20px;
-}
-</style>
+

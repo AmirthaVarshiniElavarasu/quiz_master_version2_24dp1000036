@@ -61,21 +61,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.score-container {
-  text-align: center;
-}
-.user-score-table {
-  margin: auto;
-  border-collapse: collapse;
-  width: 80%;
-}
-.user-score-table th,
-.user-score-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-.user-score-table th {
-  background-color: #f2f2f2;
-}
-</style>
+

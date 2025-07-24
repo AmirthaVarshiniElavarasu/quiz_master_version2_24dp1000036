@@ -163,26 +163,3 @@ export default {
   },
 };
 </script>
-<style scoped>
-.container {
-  padding: 20px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 0.5em;
-  text-align: center;
-}
-
-button {
-  margin: 0 5px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-</style>
