@@ -6,6 +6,8 @@ import AdminDashboard from '../pages/AdminDashboard.vue';
 import UserDashboard from '../pages/UserDashboard.vue';
 import QuizDashboard from '../pages/QuizDashboard.vue';
 import QuestionsPage from '../pages/QuestionsPage.vue';
+import UserScore from '../pages/UserScore.vue';
+import UserQuiz from '../pages/UserQuiz.vue';
 
 
 const routes = [
@@ -15,7 +17,9 @@ const routes = [
     { path: '/admin_dashboard', name: 'AdminDashboard', component: AdminDashboard, meta: { requiresAuth: true, role: 'admin' }},
     { path: '/user_dashboard', name: 'UserDashboard', component: UserDashboard, meta: { requiresAuth: true, role: 'user'}},
     { path: '/quiz_dashboard', name: 'QuizDashboard', component: QuizDashboard, meta: { requiresAuth: true, role: 'admin'}},
-    { path: '/questions/:quiz_id', name: 'Questions', component: QuestionsPage, meta: { requiresAuth: true, role: 'admin'}}
+    { path: '/questions/:quiz_id', name: 'Questions', component: QuestionsPage, meta: { requiresAuth: true, role: 'admin'}},
+    { path: '/user/score/:id', name: 'UserScore', component: UserScore, meta: { requiresAuth: true, role: 'user'}},
+    { path: '/user/startquiz/:quiz_id', name: 'UserQuiz', component: UserQuiz, meta: { requiresAuth: true, role: 'user'}}
 ];
 
 const router = createRouter({

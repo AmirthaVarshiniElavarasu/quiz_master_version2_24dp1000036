@@ -78,7 +78,7 @@ export default {
             });
 
             this.quizzes = res.data.quizzes || [];
-            this.chapters = res.data.chapters || []; // ✅ add this
+            this.chapters = res.data.chapters || []; 
             this.username = res.data.user || '';
         } catch (err) {
             console.error('Failed to load quiz data', err);

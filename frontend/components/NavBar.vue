@@ -10,7 +10,11 @@
         <router-link to="/quiz_dashboard">Quiz</router-link>
       </div>
 
-      <div class="summary" v-if="role === 'admin'">
+      <div class="score" v-if="role === 'user'">
+       <router-link to="/user_score">Score</router-link>
+      </div>
+
+      <div class="summary">
         <router-link to="/summary">Summary</router-link>
       </div>
 
@@ -22,7 +26,7 @@
         <input type="search" v-model="searchQuery" @input="search" placeholder="Search here"/>
       </div>
 
-      <div id="welcome">{{ username }}</div>
+      <div id="welcome">User: {{ username }}</div>
     </nav>
 
     <div class="search-results" v-if="results.length > 0">
