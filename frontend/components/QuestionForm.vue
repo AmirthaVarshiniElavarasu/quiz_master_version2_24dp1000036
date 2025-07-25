@@ -94,17 +94,17 @@ export default {
 
       const payload = {
         ques_statement: this.question.ques_statement,
-        quiz_id: this.question.quiz_id,
-        correct_option_id: null,
-        options: this.options
+        quiz_id: parseInt(this.question.quiz_id), // ensure it's an int
+        options: this.options.map(opt => opt.trim()), // ensure clean strings
+        correct_option_index: this.correctOptionIndex
       };
+
 
       try {
         if (this.isEdit) {
           payload.correct_option_id = this.question.options[this.correctOptionIndex]?.op_id;
           await axios.put(`/api/questions/${this.question.ques_id}`, payload, { headers });
         } else {
-          payload.correct_option = this.options[this.correctOptionIndex];
           await axios.post('/api/questions', payload, { headers });
         }
 

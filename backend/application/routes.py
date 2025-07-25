@@ -30,9 +30,10 @@ quiz_parser.add_argument('quiz_duration_minute', type=int, required=True, help='
 # questions
 question_parser = reqparse.RequestParser()
 question_parser.add_argument('ques_statement', type=str, required=True, help="Question statement is required")
-question_parser.add_argument('correct_option_id', type=int, required=True, help="Correct option is required")
+question_parser.add_argument('correct_option_id', type=int, required=False, help="Correct option is required")
 question_parser.add_argument('quiz_id', type=int, required=True, help="Quiz ID is required")
 question_parser.add_argument('options', type=list, location='json', required=True, help="Options are required")
+question_parser.add_argument('correct_option_index', type=int, required=True)
 
 def generate_color():
     return "#{:06x}".format(random.randint(0,0XFFFFFF))
@@ -408,26 +409,34 @@ class QuestionResource(Resource):
         else:
             questions = Questions.query.all()
             return [q.serialize() for q in questions], 200
-
-        
+  
     @auth_token_required
     @roles_required('admin')
     def post(self):
         args = question_parser.parse_args()
         question = Questions(
             ques_statement=args['ques_statement'],
-            correct_option_id=args['correct_option_id'],
-            quiz_id=args['quiz_id']
+            quiz_id=args['quiz_id'],
+            correct_option_id=None  # set later
         )
         db.session.add(question)
-        db.session.flush()  # Get question ID before commit
+        db.session.flush()  # so question.ques_id is available
 
+        option_objs = []
         for opt_text in args['options']:
-            option = Option(op_statement=opt_text, op_ques_id=question.ques_id)
-            db.session.add(option)
+            opt = Option(op_statement=opt_text, op_ques_id=question.ques_id)
+            db.session.add(opt)
+            option_objs.append(opt)
+
+        db.session.flush()  # to get op_ids
+
+        correct_index = args.get('correct_option_index')
+        if correct_index is not None and 0 <= correct_index < len(option_objs):
+            question.correct_option_id = option_objs[correct_index].op_id
 
         db.session.commit()
         return {"message": "Question created successfully", "question_id": question.ques_id}, 201
+
 
     @auth_token_required
     @roles_required('admin')

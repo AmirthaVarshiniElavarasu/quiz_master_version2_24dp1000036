@@ -87,6 +87,7 @@ export default {
         quiz_date: this.quiz.quiz_date.split('T')[0],
         quiz_duration_hours: this.quiz.quiz_duration_hours,
         quiz_duration_minute: this.quiz.quiz_duration_minute,
+
       };
 
       try {
