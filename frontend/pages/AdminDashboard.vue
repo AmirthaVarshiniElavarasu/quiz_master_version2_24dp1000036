@@ -2,6 +2,7 @@
   <NavBar />
   <div class="dashboard">
     <h2 class="text-center">Welcome, {{ username }}</h2>
+    <button @click="downloadCSV">Download CSV</button>
     <div v-if="subjects.length === 0" class="no-data">No subjects found.</div>
 
     <div v-for="subject in subjects" :key="subject.sub_id" class="subject-card">
@@ -114,7 +115,35 @@ export default {
         this.visibleDescriptions.push(subId);
       }
     },
-    
+    async downloadCSV() {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.get('/api/export_csv', {
+            headers: {
+              'Authentication-Token': token,
+            }
+          });
+
+          const fileId = response.data.id;
+          const result = await axios.get(`/api/csv_result/${fileId}`, {
+            headers: {
+              'Authentication-Token': token,
+            },
+            responseType: 'blob' 
+          });
+
+          const url = window.URL.createObjectURL(new Blob([result.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', 'UserQuizDetails.csv'); 
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+        } catch (err) {
+          console.error(err);
+          alert('Error in downloading CSV file.');
+        }},
     deleteChapter(chapter) {
       if (confirm(`Are you sure you want to delete "${chapter.chap_title} ${chapter.chap_id}"?`)) {
         const token = localStorage.getItem('token');

@@ -1,12 +1,15 @@
-from flask import jsonify,request,make_response
+from flask import jsonify,request,make_response,send_from_directory
 from flask_security import auth_required,roles_required,current_user,utils,auth_token_required,roles_accepted
 from .database import db
 from .userdb import datastore
 from .models import User,Subject,Chapter,Quiz,Questions,Option,Scores,Role
+from .utils import generate_color,get_no_of_attempts_by_month,get_no_of_subject_by_quiz,get_total_scores_by_subject,get_user_attempts_by_subject,roles_list
 from datetime import datetime,timezone
 from flask_restful import Resource,reqparse
 from sqlalchemy import desc,func
-import random,calendar
+import calendar
+from celery.result import AsyncResult
+from .tasks import csv_report
 
 
 # subject
@@ -35,66 +38,9 @@ question_parser.add_argument('quiz_id', type=int, required=True, help="Quiz ID i
 question_parser.add_argument('options', type=list, location='json', required=True, help="Options are required")
 question_parser.add_argument('correct_option_index', type=int, required=True)
 
-def generate_color():
-    return "#{:06x}".format(random.randint(0,0XFFFFFF))
-
-def get_user_attempts_by_subject():
-    user_attempts = (
-        db.session.query(
-            Subject.sub_name,
-            db.func.count(db.func.distinct(Scores.user_score_id)).label("user_attempts")  # Unique users per subject
-        )
-        .join(Chapter, Subject.sub_id == Chapter.sub_id)
-        .join(Quiz, Chapter.chap_id == Quiz.chap_id)
-        .join(Scores, Quiz.quiz_id == Scores.quiz_score_id)
-        .group_by(Subject.sub_name)
-        .all()
-    )
-    return user_attempts
-
-def get_total_scores_by_subject():
-    total_scores = (
-        db.session.query(Subject.sub_name,db.func.max(Scores.score_total).label("total_score"))
-        .join(Chapter, Subject.sub_id == Chapter.sub_id)
-        .join(Quiz, Chapter.chap_id == Quiz.chap_id)
-        .join(Scores, Quiz.quiz_id == Scores.quiz_score_id)
-        .group_by(Subject.sub_name)
-        .all()
-    )
-    return total_scores
-
-def get_no_of_subject_by_quiz(user_id):
-    Quiz_subjects=(
-        db.session.query(
-            Subject.sub_name,
-            db.func.count(db.func.distinct(Scores.quiz_score_id)).label("no_of_quiz")  # Unique quiz per subject
-        )
-        .join(Chapter, Subject.sub_id == Chapter.sub_id)
-        .join(Quiz, Chapter.chap_id == Quiz.chap_id)
-        .join(Scores, Quiz.quiz_id == Scores.quiz_score_id)
-        .filter(Scores.user_score_id ==user_id)
-        .group_by(Subject.sub_name)
-        .all())
-    return Quiz_subjects
-
-def get_no_of_attempts_by_month(user_id):
-    quiz_attempt=(
-        db.session.query(
-            db.func.extract('year',Scores.score_time_stamp).label('year'),
-            db.func.extract('month',Scores.score_time_stamp).label('month'),
-            db.func.count(db.func.distinct(Scores.quiz_score_id)).label("no_of_quiz"))
-            .filter(Scores.user_score_id==user_id)
-            .group_by('year', 'month')
-            .order_by('year', 'month')
-            .all())
-    return quiz_attempt
 
 
-def roles_list(roles):
-    role_list=[]
-    for role in roles:
-        role_list.append(role.name)
-    return role_list
+
 
 class AdminHome(Resource):
     @auth_required('token')
@@ -795,6 +741,23 @@ class SummaryDashboard(Resource):
                 "leaderboard": leaderboard
             })
 
+class ExportCSVReport(Resource):
+    @auth_required('token')
+    @roles_required('admin')
+    def get(self):
+        result= csv_report.delay()
+        return jsonify({
+            "id" : result.id,
+            "result": result.result,
+        })
+
+class CsvResult(Resource):
+    @auth_required('token')
+    @roles_required('admin')
+    def get(self,id):
+        result = AsyncResult(id)
+        return send_from_directory("csv_files", result.result)
+
 
 
 def register_routes(api):
@@ -812,6 +775,8 @@ def register_routes(api):
     api.add_resource(QuestionsPage,'/api/questions_page/<int:quiz_id>')
     api.add_resource(QuizSubmission,'/api/quiz_submission/<int:quiz_id>')
     api.add_resource(ScorePage,'/api/score_page/<int:user_id>')
-    api.add_resource(SummaryDashboard, '/api/summary_page')
+    api.add_resource(SummaryDashboard,'/api/summary_page')
+    api.add_resource(ExportCSVReport,'/api/export_csv')
+    api.add_resource(CsvResult,'/api/csv_result/<string:id>')
 
 

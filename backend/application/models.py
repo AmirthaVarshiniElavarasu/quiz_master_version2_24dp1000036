@@ -177,6 +177,7 @@ class Scores(db.Model):
             'score_total': self.score_total,
             'No_of_question': self.No_of_question,
             'score_time_stamp': self.score_time_stamp.strftime("%Y-%m-%d %H:%M:%S"),
+            'user_id':self.User.id,
             'username': self.User.username,
             'quiz_name': self.Quiz.quiz_title
         }
