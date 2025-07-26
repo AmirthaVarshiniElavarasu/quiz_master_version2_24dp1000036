@@ -7,8 +7,8 @@ from flask_security import Security, hash_password
 from datetime import date
 from flask_restful import Api
 from application.celery_init import celery_init_app
-
-
+from celery.schedules import crontab
+from application.tasks import monthly_report
 def create_app():
 
     app = Flask(__name__)
@@ -51,12 +51,20 @@ app= create_app()
 api = Api(app)
 celery = celery_init_app(app)
 
-@app.route('/api/hello')
-def hello():
-    return jsonify({'message': 'Hello from Flask!'})
+celery.autodiscover_tasks()
+
+
+
 
 from application.routes import *
 
+
+@celery.on_after_finalize.connect 
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(
+        crontab(minute = '*/2'),
+        monthly_report.s(),
+    )
 
 register_routes(api)
 

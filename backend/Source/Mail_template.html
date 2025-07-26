@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Monthly Quiz Activity Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #fdfdfd;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+        }
+
+        header, footer {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 16px;
+        }
+
+        .highlight {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: 2px solid #2d3e50;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            border: 1px solid #2d3e50;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #2d3e50;
+            color: white;
+        }
+
+        td {
+            background-color: #f9f9f9;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #eef3f7;
+        }
+
+        tr:hover td {
+            background-color: #dceefb;
+        }
+
+        .total-row td {
+            font-weight: bold;
+            background-color: #cfe2f3 !important;
+        }
+
+        footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Monthly Quiz Activity Report</h1>
+            <p class="highlight">Hello {{data['username']}}</p>
+            <p>This report includes your quiz participation and performance details for this month.</p>
+        </header>
+
+        <section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sr No</th>
+                        <th>Quiz Title</th>
+                        <th>Subject</th>
+                        <th>Date Taken</th>
+                        <th>Score</th>
+                        <th>Max Score</th>
+                        <th>Rank Quiz</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total_score = 0 %}
+                    {% set total_max = 0 %}
+                    {% for q in data['quizzes'] %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ q['title'] }}</td>
+                        <td>{{ q['subject'] }}</td>
+                        <td>{{ q['date'] }}</td>
+                        <td>{{ q['score'] }}</td>
+                        <td>{{ q['max_score'] }}</td>
+                        <td>{{ q['rank'] }}</td>
+                        {% set total_score = total_score + q.score %}
+                        {% set total_max = total_max + q.max_score %}
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td colspan="4">Total</td>
+                        <td>{{ total_score }}</td>
+                        <td>{{ total_max }}</td>
+                        <td>-</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="4">Average Score</td>
+                        <td colspan="3">{{ '%.2f' % (total_score / data['quizzes']|length) if data['quizzes'] else 0 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <p>Keep practicing to improve your skills and rankings. Good luck!</p>
+
+        <footer>
+            Quiz Master V2 | &copy; 2025 
+        </footer>
+    </div>
+</body>
+</html>

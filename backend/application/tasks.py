@@ -1,17 +1,21 @@
+from collections import Counter,defaultdict
+from .models import User,Quiz,Scores,Chapter
+from sqlalchemy import extract
+from sqlalchemy.orm import joinedload
+from .mail import send_email
+from .utils import format_report
 from celery import shared_task
-from .models import User,Subject,Chapter,Quiz,Scores
-from .utils import fromat_report
-import time
+from datetime import datetime
+from .database import db
 import csv
 import io
-from collections import Counter
 
 
 @shared_task(ignore_results=False,name = "csv_report")
 def csv_report():
     
     csv_filename="UserQuizDetails.csv"
-    with open(f'./Source/csv_files/{csv_filename}','w',newline="") as csvfile:
+    with open(f'/Source/csv_files/{csv_filename}','w',newline="") as csvfile:
         output=csv.writer(csvfile,delimiter=',')
         output.writerow([
         "s.no","user_id", "username", "quizzes_taken", "average_score (%)", "mostly_attended_subject"
@@ -49,10 +53,77 @@ def csv_report():
                 
     return csv_filename
 
-@shared_task(ignore_results=False,name = "montly_report")
-def montly_report():
+@shared_task(ignore_results=False, name="monthly_report")
+def monthly_report():
+    now = datetime.now()
 
-    return "Monthly report sent"
+
+    monthly_scores = (
+        db.session.query(Scores)
+        .options(
+            joinedload(Scores.Quiz).joinedload(Quiz.Chapter).joinedload(Chapter.Subject),
+            joinedload(Scores.User)
+        )
+        .filter(extract('month', Scores.score_time_stamp) == now.month)
+        .filter(extract('year', Scores.score_time_stamp) == now.year)
+        .all()
+    )
+
+
+    user_score_map = defaultdict(list)
+    quiz_ids = set()
+
+    for score in monthly_scores:
+        user_score_map[score.user_score_id].append(score)
+        quiz_ids.add(score.quiz_score_id)
+
+
+    all_quiz_scores = defaultdict(list)
+    quiz_scores_query = (
+        db.session.query(Scores)
+        .filter(Scores.quiz_score_id.in_(quiz_ids))
+        .order_by(Scores.quiz_score_id, Scores.score_total.desc())
+        .all()
+    )
+
+    for s in quiz_scores_query:
+        all_quiz_scores[s.quiz_score_id].append(s)
+
+
+    for user_id, scores in user_score_map.items():
+        user_obj = db.session.get(User, user_id)
+        quizzes_data = []
+
+        for score in scores:
+            quiz = score.Quiz
+            chapter = quiz.Chapter
+            subject = chapter.Subject
+
+            quiz_scores = all_quiz_scores[quiz.quiz_id]
+            rank = next((i + 1 for i, s in enumerate(quiz_scores) if s.user_score_id == user_id), None)
+
+            quizzes_data.append({
+                'title': quiz.quiz_title,
+                'subject': subject.sub_name,
+                'date': score.score_time_stamp.strftime('%Y-%m-%d'),
+                'score': score.score_total,
+                'max_score': score.No_of_question,
+                'rank': rank
+            })
+
+        user_data = {
+            'username': user_obj.username,
+            'email': user_obj.email,
+            'quizzes': quizzes_data
+        }
+
+        # Render HTML email and send it
+        message = format_report('Source/Mail_template.html', user_data)
+        send_email(user_obj.email, subject="Monthly Quiz Performance Report - Quiz Master", message=message)
+
+    return "Monthly quiz reports sent"
+
+
 
 @shared_task(ignore_results=False,name = "daily_reminder")
 def daily_reminder():
