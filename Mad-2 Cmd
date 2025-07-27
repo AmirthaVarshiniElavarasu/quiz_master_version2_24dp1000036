@@ -1,0 +1,15 @@
+redis-server
+
+sudo systemctl stop redis
+
+celery -A app.celery worker --loglevel INFO
+
+celery -A app.celery beat --loglevel INFO
+
+python3 app.py
+
+npm run serve
+
+MailHog
+
+

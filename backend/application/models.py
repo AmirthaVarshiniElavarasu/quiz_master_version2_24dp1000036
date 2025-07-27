@@ -1,6 +1,7 @@
 from .database import db
 from flask_security import UserMixin, RoleMixin
-from datetime import datetime, time
+from datetime import datetime
+
 
 # Association table for User-Role
 class Role(db.Model, RoleMixin):
@@ -167,7 +168,7 @@ class Scores(db.Model):
     score_id=db.Column(db.Integer,primary_key=True)
     score_total=db.Column(db.Integer,nullable=False)
     No_of_question=db.Column(db.Integer,nullable=False)
-    score_time_stamp = db.Column(db.DateTime, default=datetime.utcnow)
+    score_time_stamp = db.Column(db.DateTime,nullable=False)
     quiz_score_id=db.Column(db.Integer,db.ForeignKey('quizzes.quiz_id',ondelete='CASCADE'),nullable=False)
     user_score_id=db.Column(db.Integer,db.ForeignKey('user.id',ondelete='CASCADE'),nullable=False)
 

@@ -35,9 +35,7 @@ export default {
       scores: [],
     };
   },
-  mounted() {
-    this.fetchScores();
-  },components:{NavBar},
+  components:{NavBar},
   methods: {
     async fetchScores() {
       const token = localStorage.getItem("token");
@@ -55,9 +53,19 @@ export default {
     },
     formatDate(dateString) {
       const date = new Date(dateString);
-      return date.toLocaleString("en-GB"); // dd/mm/yyyy hh:mm
+      return date.toLocaleString("en-GB", {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }); // dd/mm/yyyy hh:mm
     },
   },
+   mounted() {
+    this.fetchScores();
+  }
 };
 </script>
 

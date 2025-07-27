@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload
 from .mail import send_email
 from .utils import format_report
 from celery import shared_task
-from datetime import datetime,timedelta
+from datetime import datetime
 from .database import db
 import csv,requests,os
 from flask import current_app

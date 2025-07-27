@@ -638,7 +638,7 @@ class QuizSubmission(Resource):
         )
         db.session.add(new_score)
         db.session.commit()
-
+        print(time.isoformat())
         return {
             "message": "Quiz submitted successfully",
             "quiz_id": quiz_id,
@@ -646,7 +646,7 @@ class QuizSubmission(Resource):
             "score": {
                 "score_total": total,
                 "No_of_question": No_of_quest,
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": time.isoformat(timespec='milliseconds')
             },
             
         }, 200
@@ -656,9 +656,7 @@ class ScorePage(Resource):
     @roles_accepted('admin', 'user')
     def get(self, user_id=None):
         if user_id:
-            scores = Scores.query.filter_by(user_score_id=user_id)\
-                                 .order_by(desc(Scores.score_total))\
-                                 .limit(10).all()
+            scores = Scores.query.filter_by(user_score_id=user_id).all()
             return [s.serialize() for s in scores], 200
         else:
             return {'message': 'User ID is required'}, 400
