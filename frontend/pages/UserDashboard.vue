@@ -35,16 +35,17 @@
         </tr>
       </tbody>
     </table>
-    <div class="reminder-section">
-  <h3>Set Daily Reminder Time</h3>
-  <label for="reminderHour">Hour:</label>
-  <input type="number" id="reminderHour" v-model="reminderHour" min="0" max="23" />
-  <label for="reminderMinute">Minute:</label>
-  <input type="number" id="reminderMinute" v-model="reminderMinute" min="0" max="59" />
-  <button @click="updateReminderTime">Save Reminder Time</button>
+    <button @click="showsettimer=true">Set Daily Reminder Time</button>
+    <div class="reminder-section" v-if="showsettimer">
+    <p>set timer in 24 hours format</p>
+    <label for="reminderHour">Hour:</label>
+    <input type="number" id="reminderHour" v-model="reminderHour" min="0" max="23" />
+    <label for="reminderMinute">Minute:</label>
+    <input type="number" id="reminderMinute" v-model="reminderMinute" min="0" max="59" />
+    <button @click="updateReminderTime">Save Reminder Time</button>
 
-  <p v-if="reminderMessage" style="color: green">{{ reminderMessage }}</p>
-</div>
+    <p v-if="reminderMessage" style="color: green">{{ reminderMessage }}</p>
+  </div>
 
 
   </div>
@@ -68,6 +69,7 @@ export default {
       selectedSubject: null,
       selectedChapter: null,
       showDetails: false,
+      showsettimer: false
     };
   },components:{
     NavBar,
@@ -119,14 +121,15 @@ export default {
     const token = localStorage.getItem('token');
     try {
       const res = await axios.put('/api/user/reminder-time', {
-        hour: this.reminderHour,
-        minute: this.reminderMinute,
+        hour: this.reminderHour || 19,
+        minute: this.reminderMinute|| 0
       }, {
         headers: {
           'Authentication-Token': token
         }
       });
       this.reminderMessage = res.data.message;
+      this.showsettimer = false
     } catch (error) {
       this.reminderMessage = "Failed to set reminder time.";
       console.error("Reminder time update failed", error);

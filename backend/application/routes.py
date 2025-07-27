@@ -169,7 +169,7 @@ class Login(Resource):
         },200
 
 class Logout(Resource):
-    @auth_token_required
+    @auth_required('token')
     def post(self):
         utils.logout_user()
         return {
@@ -177,7 +177,7 @@ class Logout(Resource):
         },200
 
 class SubjectResource(Resource):
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def get(self, sub_id=None):
         if sub_id:
@@ -187,7 +187,7 @@ class SubjectResource(Resource):
         subjects = Subject.query.all()
         return [ s.serialize() for s in subjects]
 
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def post(self):
         
@@ -203,7 +203,7 @@ class SubjectResource(Resource):
         db.session.commit()
         return {'message': f'Subject {new_sub.sub_name} created successfully'}, 201
 
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def put(self,sub_id):
         
@@ -216,7 +216,7 @@ class SubjectResource(Resource):
 
         return {'message': f'Subject {subject.sub_name} updated successfully'}, 200
 
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def delete(self,sub_id):
         
@@ -230,8 +230,7 @@ class SubjectResource(Resource):
         return {'message': f'Subject {subject.sub_name} deleted successfully'}, 200
 
 class ChapterResource(Resource):
-    # GET: Get all chapters or one chapter by id
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def get(self, chap_id=None):
 
@@ -242,8 +241,7 @@ class ChapterResource(Resource):
         chapters = Chapter.query.all()
         return [c.serialize() for c in chapters], 200
 
-    # POST: Create a new chapter
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def post(self):
         args = chapter_parser.parse_args()
@@ -260,8 +258,8 @@ class ChapterResource(Resource):
         db.session.commit()
         return {"message": f"Chapter '{new_chap.chap_title} 'created successfully"}, 201
    
-    # PUT: Update a chapter
-    @auth_token_required
+
+    @auth_required('token')
     @roles_required('admin')
     def put(self, chap_id):
 
@@ -275,8 +273,7 @@ class ChapterResource(Resource):
 
         return {"message": f"Chapter '{chapter.chap_title} 'updated successfully"}, 200
 
-    # DELETE: Delete a chapter
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def delete(self, chap_id):
         
@@ -289,7 +286,7 @@ class ChapterResource(Resource):
         return {"message": f"Chapter '{chapter.chap_title}' deleted successfully"}, 200
 
 class QuizResource(Resource):
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def get(self, quiz_id=None):
         if quiz_id:
@@ -305,7 +302,7 @@ class QuizResource(Resource):
                  'chapters': chap_list
                  }, 200
 
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def post(self):
         args = quiz_parser.parse_args()
@@ -330,7 +327,7 @@ class QuizResource(Resource):
         daily_reminder.delay()
         return {'message': f"{quiz_title} created successfully."}, 201
 
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def put(self, quiz_id):
         quiz = Quiz.query.get_or_404(quiz_id)
@@ -348,7 +345,7 @@ class QuizResource(Resource):
 
         return {'message': f"{quiz.quiz_title} updated successfully."}, 200
     
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def delete(self, quiz_id):
         quiz = Quiz.query.get_or_404(quiz_id)
@@ -359,7 +356,7 @@ class QuizResource(Resource):
         return {'message': f"{quiz.quiz_title} deleted successfully."}, 200
 
 class QuestionResource(Resource):
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def get(self, question_id=None):
         if question_id:
@@ -369,7 +366,7 @@ class QuestionResource(Resource):
             questions = Questions.query.all()
             return [q.serialize() for q in questions], 200
   
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def post(self):
         args = question_parser.parse_args()
@@ -397,7 +394,7 @@ class QuestionResource(Resource):
         return {"message": "Question created successfully", "question_id": question.ques_id}, 201
 
 
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def put(self, question_id):
         question = Questions.query.get_or_404(question_id)
@@ -425,7 +422,7 @@ class QuestionResource(Resource):
         db.session.commit()
         return {"message": "Question updated successfully"}, 200
 
-    @auth_token_required
+    @auth_required('token')
     @roles_required('admin')
     def delete(self, question_id):
         question = Questions.query.get_or_404(question_id)
@@ -578,7 +575,7 @@ class SearchResource(Resource):
         return jsonify(results)
 
 class Quizview(Resource):
-    @auth_token_required
+    @auth_required('token')
     @roles_accepted('admin', 'user')
     def get(self, sub_id, chap_id):
         # Logic to fetch and return quiz view data
@@ -772,7 +769,8 @@ class CsvResult(Resource):
         return send_from_directory("csv_files", result.result)
 
 class UpdateReminderTime(Resource):
-    @auth_token_required
+    @auth_required('token')
+    @roles_required('user')
     def put(self):
         args = reminder_parser.parse_args()
         user_id = current_user.id
