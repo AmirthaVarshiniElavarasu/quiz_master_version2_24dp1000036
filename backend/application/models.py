@@ -181,9 +181,3 @@ class Scores(db.Model):
             'username': self.User.username,
             'quiz_name': self.Quiz.quiz_title
         }
-class User_login_activity(db.Model):
-    __tablename__ = 'user_login_activity'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
-    last_login = db.Column(db.DateTime, default=datetime.utcnow)
-    reminder_time = db.Column(db.Time, default=time(19, 0)) 

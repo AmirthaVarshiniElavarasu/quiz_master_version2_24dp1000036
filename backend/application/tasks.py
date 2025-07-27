@@ -1,5 +1,5 @@
 from collections import Counter,defaultdict
-from .models import User,Quiz,Scores,Chapter,User_login_activity
+from .models import User,Quiz,Scores,Chapter
 from sqlalchemy import extract
 from sqlalchemy.orm import joinedload
 from .mail import send_email
@@ -15,9 +15,8 @@ import logging
 
 @shared_task(ignore_results=False,name = "csv_report")
 def csv_report():
-    
     csv_filename="UserQuizDetails.csv"
-    with open(f'/Source/csv_files/{csv_filename}','w',newline="") as csvfile:
+    with open(f'csv_files/{csv_filename}','w',newline="") as csvfile:
         output=csv.writer(csvfile,delimiter=',')
         output.writerow([
         "s.no","user_id", "username", "quizzes_taken", "average_score (%)", "mostly_attended_subject"
@@ -131,34 +130,11 @@ logger = logging.getLogger(__name__)
 
 @shared_task(ignore_results=False, name="daily_reminder")
 def daily_reminder():
-    now = datetime.now()
-    current_time = now.time()
-    inactive_threshold = now - timedelta(minutes=1) 
+    message = f"Hi Everyone, new quizzes are available! Check: http://127.0.0.1:5000"
+    webhook_url = "https://chat.googleapis.com/v1/spaces/AAQAPcnFblE/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=4sYFwaJVHcOQ36zw8gp8jh8HtcA5KPu-DK4UZZ7c3xA"
+    response = requests.post(webhook_url, json={"text": message})
 
+    current_app.logger.info(f"Sent message to everyone | Status: {response.status_code}")
 
-    quizzes_today = Quiz.query.filter(Quiz.quiz_date == now.date()).all()
-    if not quizzes_today:
-        current_app.logger.info("No new quizzes available for today.")
-        return "No new quizzes today"
-
-    users = User_login_activity.query.filter(User_login_activity.last_login < inactive_threshold).all()
-    count = 0
-
-    for user in users:
-        if not user.reminder_time:
-            continue
-
-        user_seconds = user.reminder_time.hour * 3600 + user.reminder_time.minute * 60
-        now_seconds = current_time.hour * 3600 + current_time.minute * 60
-
-     
-        if abs(user_seconds - now_seconds) >= 60:
-            message = f"Hi {user.username}, new quizzes are available! Check: http://127.0.0.1:5000"
-            webhook_url = "https://chat.googleapis.com/v1/spaces/AAQAPcnFblE/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=4sYFwaJVHcOQ36zw8gp8jh8HtcA5KPu-DK4UZZ7c3xA"
-            response = requests.post(webhook_url, json={"text": message})
-
-            current_app.logger.info(f"Sent message to {user.username} | Status: {response.status_code}")
-            count += 1
-
-    return f"Sent reminders to {count} user(s)."
+    return f"Sent reminders to all users."
 

@@ -1,5 +1,5 @@
 from flask import jsonify,request,make_response,send_from_directory
-from flask_security import auth_required,roles_required,current_user,utils,auth_token_required,roles_accepted
+from flask_security import auth_required,roles_required,current_user,utils,roles_accepted
 from .database import db
 from .userdb import datastore
 from .models import *
@@ -10,7 +10,7 @@ from sqlalchemy import desc,func
 import calendar
 from celery.result import AsyncResult
 from .tasks import csv_report,daily_reminder
-
+from .extension import cache
 
 # subject
 subject_parser = reqparse.RequestParser()
@@ -66,7 +66,6 @@ class UserHome(Resource):
     @roles_required('user')
     def get(self):
         user = current_user
-
         quizzes=Quiz.query.all()
         chapters=Chapter.query.all()
         subjects=Subject.query.all()
@@ -147,16 +146,6 @@ class Login(Resource):
      
         auth_token=user.get_auth_token()
 
-        # Record login time
-        existing = User_login_activity.query.filter_by(username=user.username).first()
-        if not existing:
-            login_record = User_login_activity(username=user.username, last_login=datetime.utcnow())
-            db.session.add(login_record)
-        else:
-            existing.last_login = datetime.utcnow()
-
-        db.session.commit()
-
         return {
             'message':'Login Successfully',
             'user':{
@@ -171,12 +160,14 @@ class Login(Resource):
 class Logout(Resource):
     @auth_required('token')
     def post(self):
+        cache.clear()
         utils.logout_user()
         return {
             'message':'Logout successful'
         },200
 
 class SubjectResource(Resource):
+    @cache.cached(timeout=300)
     @auth_required('token')
     @roles_required('admin')
     def get(self, sub_id=None):
@@ -230,6 +221,7 @@ class SubjectResource(Resource):
         return {'message': f'Subject {subject.sub_name} deleted successfully'}, 200
 
 class ChapterResource(Resource):
+    @cache.cached(timeout=300)
     @auth_required('token')
     @roles_required('admin')
     def get(self, chap_id=None):
@@ -286,6 +278,7 @@ class ChapterResource(Resource):
         return {"message": f"Chapter '{chapter.chap_title}' deleted successfully"}, 200
 
 class QuizResource(Resource):
+    @cache.cached(timeout=300)
     @auth_required('token')
     @roles_required('admin')
     def get(self, quiz_id=None):
@@ -578,7 +571,6 @@ class Quizview(Resource):
     @auth_required('token')
     @roles_accepted('admin', 'user')
     def get(self, sub_id, chap_id):
-        # Logic to fetch and return quiz view data
         subject = Subject.query.get_or_404(sub_id)
         chapter = Chapter.query.get_or_404(chap_id)
        
@@ -673,6 +665,7 @@ class ScorePage(Resource):
             return {'message': 'User ID is required'}, 400
 
 class SummaryDashboard(Resource):
+    @cache.cached(timeout=600)
     @auth_required('token')
     @roles_accepted('admin', 'user')
     def get(self):
@@ -768,23 +761,7 @@ class CsvResult(Resource):
         result = AsyncResult(id)
         return send_from_directory("csv_files", result.result)
 
-class UpdateReminderTime(Resource):
-    @auth_required('token')
-    @roles_required('user')
-    def put(self):
-        args = reminder_parser.parse_args()
-        user_id = current_user.id
-        user = User.query.get_or_404(user_id)
 
-        try:
-            reminder_time = time(args['hour'], args['minute'])
-        except ValueError:
-            return {'message': 'Invalid time format'}, 400
-
-        user.reminder_time = reminder_time
-        db.session.commit()
-
-        return {'message': f'Reminder time set to {reminder_time.strftime("%H:%M")}'}, 200
 
 def register_routes(api):
     api.add_resource(AdminHome,'/api/admin_dashboard')
@@ -804,7 +781,6 @@ def register_routes(api):
     api.add_resource(SummaryDashboard,'/api/summary_page')
     api.add_resource(ExportCSVReport,'/api/export_csv')
     api.add_resource(CsvResult,'/api/csv_result/<string:id>')
-    api.add_resource(UpdateReminderTime, '/api/user/reminder-time')
 
 
 
