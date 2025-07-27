@@ -1,14 +1,14 @@
 from collections import Counter,defaultdict
-from .models import User,Quiz,Scores,Chapter
+from .models import User,Quiz,Scores,Chapter,User_login_activity
 from sqlalchemy import extract
 from sqlalchemy.orm import joinedload
 from .mail import send_email
 from .utils import format_report
 from celery import shared_task
-from datetime import datetime
+from datetime import datetime,timedelta
 from .database import db
-import csv
-import io
+import csv,requests,os
+
 
 
 @shared_task(ignore_results=False,name = "csv_report")
@@ -125,7 +125,30 @@ def monthly_report():
 
 
 
-@shared_task(ignore_results=False,name = "daily_reminder")
+
+@shared_task(ignore_results=False, name="daily_reminder")
 def daily_reminder():
-    return "daily reminder for user"
+    now = datetime.now()
+    current_time = now.time()
+    inactive_since = now - timedelta(minutes=2)
+
+    quizzes_today = Quiz.query.filter(Quiz.quiz_date == now.date()).all()
+    if not quizzes_today:
+        return "No new quizzes today"
+
+    users = User_login_activity.query.filter(User_login_activity.last_login < inactive_since).all()
+    count = 0
+
+    for user in users:
+        if user.reminder_time:
+            user_seconds = user.reminder_time.hour * 3600 + user.reminder_time.minute * 60
+            now_seconds = current_time.hour * 3600 + current_time.minute * 60
+
+            if abs(user_seconds - now_seconds) <= 600:
+                message = f"Hi {user.username}, you have new quizzes! Check: http://127.0.0.1:5000"
+                webhook_url = "https://chat.googleapis.com/v1/spaces/AAQAPcnFblE/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=4sYFwaJVHcOQ36zw8gp8jh8HtcA5KPu-DK4UZZ7c3xA"
+                requests.post(webhook_url, json={"text": message})
+                count += 1
+
+    return f"Sent reminders to {count} users."
 

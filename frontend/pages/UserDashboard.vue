@@ -6,7 +6,7 @@
         {{ msg.text }}
       </p>
     </div>
-
+     
     <h1 style="text-align:center">Upcoming Quizzes</h1>
     <table id="user-table-db">
       <thead>
@@ -35,6 +35,18 @@
         </tr>
       </tbody>
     </table>
+    <div class="reminder-section">
+  <h3>Set Daily Reminder Time</h3>
+  <label for="reminderHour">Hour:</label>
+  <input type="number" id="reminderHour" v-model="reminderHour" min="0" max="23" />
+  <label for="reminderMinute">Minute:</label>
+  <input type="number" id="reminderMinute" v-model="reminderMinute" min="0" max="59" />
+  <button @click="updateReminderTime">Save Reminder Time</button>
+
+  <p v-if="reminderMessage" style="color: green">{{ reminderMessage }}</p>
+</div>
+
+
   </div>
   <QuizDetails v-if="showDetails" :quiz="selectedQuiz" :subject="selectedSubject" :chapter="selectedChapter" @close="showDetails = false"/>
 </template>
@@ -51,6 +63,7 @@ export default {
       quizzes: [],
       messages: [],
       chapters: [],
+      setupTime: '',
       selectedQuiz: null,
       selectedSubject: null,
       selectedChapter: null,
@@ -71,7 +84,8 @@ export default {
         });
         this.quizzes = res.data.quizzes || [];
         this.messages = res.data.messages || [];
-        this.chapters = res.data.chapters || []; // Assuming backend sends flash messages like { category, text }
+        this.chapters = res.data.chapters || [];
+        this.setupTime = res.data.setup_time || ''
       } catch (err) {
         console.error('Failed to fetch quizzes', err);
       }
@@ -99,8 +113,25 @@ export default {
     },
     formatDate(dateStr) {
       const date = new Date(dateStr);
-      return date.toLocaleDateString('en-GB'); // dd-mm-yyyy format
+      return date.toLocaleDateString('en-GB'); 
     },
+    async updateReminderTime() {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await axios.put('/api/user/reminder-time', {
+        hour: this.reminderHour,
+        minute: this.reminderMinute,
+      }, {
+        headers: {
+          'Authentication-Token': token
+        }
+      });
+      this.reminderMessage = res.data.message;
+    } catch (error) {
+      this.reminderMessage = "Failed to set reminder time.";
+      console.error("Reminder time update failed", error);
+    }
+  }
   },
   created() {
     this.fetchQuizzes();

@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-from application.database import db
+from application.database import db,migrate
 from application.userdb import datastore
 from application.config import LocalDevelopmentConfig
 from flask_security import Security, hash_password
@@ -9,11 +9,13 @@ from flask_restful import Api
 from application.celery_init import celery_init_app
 from celery.schedules import crontab
 from application.tasks import monthly_report
+
 def create_app():
 
     app = Flask(__name__)
     app.config.from_object(LocalDevelopmentConfig)
     db.init_app(app)
+    migrate.init_app(app, db)
 
     #flask-security setup
     app.security = Security(app,datastore)
@@ -62,9 +64,16 @@ from application.routes import *
 @celery.on_after_finalize.connect 
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(
-        crontab(minute = '*/2'),
+        crontab(minute = '*/1'),
         monthly_report.s(),
     )
+
+celery.conf.beat_schedule = {
+    'send-daily-reminders': {
+        'task': 'daily_reminder',
+        'schedule': crontab(minute='*'),  
+    },
+}
 
 register_routes(api)
 

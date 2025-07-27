@@ -2,14 +2,14 @@ from flask import jsonify,request,make_response,send_from_directory
 from flask_security import auth_required,roles_required,current_user,utils,auth_token_required,roles_accepted
 from .database import db
 from .userdb import datastore
-from .models import User,Subject,Chapter,Quiz,Questions,Option,Scores,Role
-from .utils import generate_color,get_no_of_attempts_by_month,get_no_of_subject_by_quiz,get_total_scores_by_subject,get_user_attempts_by_subject,roles_list
-from datetime import datetime,timezone
+from .models import *
+from .utils import *
+from datetime import datetime,timezone,time
 from flask_restful import Resource,reqparse
 from sqlalchemy import desc,func
 import calendar
 from celery.result import AsyncResult
-from .tasks import csv_report
+from .tasks import csv_report,daily_reminder
 
 
 # subject
@@ -38,7 +38,9 @@ question_parser.add_argument('quiz_id', type=int, required=True, help="Quiz ID i
 question_parser.add_argument('options', type=list, location='json', required=True, help="Options are required")
 question_parser.add_argument('correct_option_index', type=int, required=True)
 
-
+reminder_parser = reqparse.RequestParser()
+reminder_parser.add_argument('hour', type=int, required=True)
+reminder_parser.add_argument('minute', type=int, required=True)
 
 
 
@@ -142,8 +144,18 @@ class Login(Resource):
                 'message': 'Invalid password'
             }),401)
         utils.login_user(user)
-
+     
         auth_token=user.get_auth_token()
+
+        # Record login time
+        existing = User_login_activity.query.filter_by(username=user.username).first()
+        if not existing:
+            login_record = User_login_activity(username=user.username, last_login=datetime.utcnow())
+            db.session.add(login_record)
+        else:
+            existing.last_login = datetime.utcnow()
+
+        db.session.commit()
 
         return {
             'message':'Login Successfully',
@@ -315,6 +327,7 @@ class QuizResource(Resource):
         )
         db.session.add(new_quiz)
         db.session.commit()
+        daily_reminder.delay()
         return {'message': f"{quiz_title} created successfully."}, 201
 
     @auth_token_required
@@ -758,7 +771,22 @@ class CsvResult(Resource):
         result = AsyncResult(id)
         return send_from_directory("csv_files", result.result)
 
+class UpdateReminderTime(Resource):
+    @auth_token_required
+    def put(self):
+        args = reminder_parser.parse_args()
+        user_id = current_user.id
+        user = User.query.get_or_404(user_id)
 
+        try:
+            reminder_time = time(args['hour'], args['minute'])
+        except ValueError:
+            return {'message': 'Invalid time format'}, 400
+
+        user.reminder_time = reminder_time
+        db.session.commit()
+
+        return {'message': f'Reminder time set to {reminder_time.strftime("%H:%M")}'}, 200
 
 def register_routes(api):
     api.add_resource(AdminHome,'/api/admin_dashboard')
@@ -778,5 +806,7 @@ def register_routes(api):
     api.add_resource(SummaryDashboard,'/api/summary_page')
     api.add_resource(ExportCSVReport,'/api/export_csv')
     api.add_resource(CsvResult,'/api/csv_result/<string:id>')
+    api.add_resource(UpdateReminderTime, '/api/user/reminder-time')
+
 
 
