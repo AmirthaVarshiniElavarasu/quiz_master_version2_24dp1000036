@@ -278,7 +278,6 @@ class ChapterResource(Resource):
         return {"message": f"Chapter '{chapter.chap_title}' deleted successfully"}, 200
 
 class QuizResource(Resource):
-    @cache.cached(timeout=300)
     @auth_required('token')
     @roles_required('admin')
     def get(self, quiz_id=None):
