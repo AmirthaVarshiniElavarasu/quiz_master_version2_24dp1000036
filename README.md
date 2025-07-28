@@ -15,7 +15,7 @@ A multi-user exam preparation web app built with **Flask**, **SQLite**, **Vue.js
 
 - Flask (API)
 - SQLite (Database)
-- Vue.js + Bootstrap (Frontend)
+- Vue.js css (Frontend)
 - Redis + Celery (Background jobs)
 
 > Fully runnable locally. No manual DB setup—everything is programmatic.

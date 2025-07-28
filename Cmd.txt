@@ -12,4 +12,10 @@ npm run serve
 
 MailHog
 
+flask db migrate -m "message"
+
+flask db upgrade
+
+
+
 

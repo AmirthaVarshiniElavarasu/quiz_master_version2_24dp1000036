@@ -1,0 +1,552 @@
+openapi: 3.0.0
+info:
+  title: Quiz Master API
+  version: '2.0'
+  description: API specification for Quiz Master v2, supporting admin and user operations.
+
+servers:
+  - url: /api
+
+paths:
+  /admin_dashboard:
+    get:
+      summary: Admin Dashboard Data
+      description: Returns all Subjects, Chapters, and Quizzes for admin dashboard. Requires admin authentication.
+      tags: [Admin]
+      responses:
+        '200':
+          description: Admin dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+
+  /user_dashboard:
+    get:
+      summary: User Dashboard Data
+      description: Returns user profile and available Subjects, Chapters, and Quizzes. Requires user authentication.
+      tags: [User]
+      responses:
+        '200':
+          description: User dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+
+  /registration:
+    post:
+      summary: Register a new user
+      description: Registers a user account with required details. Responds with user creation status.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                username:
+                  type: string
+                qualification:
+                  type: string
+                gender:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Invalid input
+
+  /login:
+    post:
+      summary: User Login
+      description: Logs in user, returns token and user info.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authenticated
+        '400':
+          description: Missing fields
+        '401':
+          description: Invalid credentials
+        '404':
+          description: User not found
+
+  /logout:
+    post:
+      summary: User Logout
+      description: Logs out the current session. Authentication required.
+      tags: [Auth]
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: Unauthorized
+
+  /subject:
+    get:
+      summary: List all Subjects
+      description: Lists all Subject records. Admin only.
+      tags: [Subject]
+      responses:
+        '200':
+          description: List of subjects.
+    post:
+      summary: Create Subject
+      description: Add a new subject. Admin only.
+      tags: [Subject]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sub_name:
+                  type: string
+                sub_Description:
+                  type: string
+      responses:
+        '201':
+          description: Subject created
+        '400':
+          description: Already exists
+
+  /subject/{sub_id}:
+    get:
+      summary: Get Subject by ID
+      description: Returns details of one Subject by ID. Admin only.
+      tags: [Subject]
+      parameters:
+        - in: path
+          name: sub_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subject details
+        '404':
+          description: Not found
+    put:
+      summary: Update Subject
+      description: Update details of a Subject by ID. Admin only.
+      tags: [Subject]
+      parameters:
+        - in: path
+          name: sub_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete Subject
+      description: Delete subject by ID, if no chapters exist. Admin only.
+      tags: [Subject]
+      parameters:
+        - in: path
+          name: sub_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+        '400':
+          description: Chapters exist
+
+  /chapters:
+    get:
+      summary: List all Chapters
+      description: List all chapters. Admin only.
+      tags: [Chapter]
+      responses:
+        '200':
+          description: List of chapters
+    post:
+      summary: Create Chapter
+      description: Add new chapter. Admin only.
+      tags: [Chapter]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Chapter created
+        '400':
+          description: Already exists
+
+  /chapters/{chap_id}:
+    get:
+      summary: Get Chapter by ID
+      description: Returns a chapter’s details. Admin only.
+      tags: [Chapter]
+      parameters:
+        - in: path
+          name: chap_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Chapter details
+        '404':
+          description: Not found
+    put:
+      summary: Update Chapter
+      description: Update chapter details. Admin only.
+      tags: [Chapter]
+      parameters:
+        - in: path
+          name: chap_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete Chapter
+      description: Delete chapter if no quizzes exist. Admin only.
+      tags: [Chapter]
+      parameters:
+        - in: path
+          name: chap_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+        '400':
+          description: Quizzes exist
+
+  /quizzes:
+    get:
+      summary: List all Quizzes
+      description: Get all quizzes or create new quiz under a chapter. Admin only.
+      tags: [Quiz]
+      responses:
+        '200':
+          description: Quizzes and chapters
+    post:
+      summary: Create Quiz
+      description: Add a quiz under a chapter. Admin only.
+      tags: [Quiz]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Quiz created
+        '400':
+          description: Bad input
+
+  /quizzes/{quiz_id}:
+    get:
+      summary: Get Quiz by ID
+      description: Get info about one quiz. Admin only.
+      tags: [Quiz]
+      parameters:
+        - in: path
+          name: quiz_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Quiz details
+        '404':
+          description: Not found
+    put:
+      summary: Update Quiz
+      description: Change quiz settings or info. Admin only.
+      tags: [Quiz]
+      parameters:
+        - in: path
+          name: quiz_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete Quiz
+      description: Remove quiz if no questions present. Admin only.
+      tags: [Quiz]
+      parameters:
+        - in: path
+          name: quiz_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+        '400':
+          description: Questions exist
+
+  /questions:
+    get:
+      summary: List all Questions
+      description: Get list of all questions. Admin only.
+      tags: [Question]
+      responses:
+        '200':
+          description: List of questions
+    post:
+      summary: Create Question
+      description: Add a question and its options to quiz. Admin only.
+      tags: [Question]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Question created
+
+  /questions/{question_id}:
+    get:
+      summary: Get Question by ID
+      description: Returns a specific question.
+      tags: [Question]
+      parameters:
+        - in: path
+          name: question_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Question details
+        '404':
+          description: Not found
+    put:
+      summary: Update Question
+      description: Edit a question and update its options/correct answer.
+      tags: [Question]
+      parameters:
+        - in: path
+          name: question_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete Question
+      description: Delete the specified question.
+      tags: [Question]
+      parameters:
+        - in: path
+          name: question_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+
+  /search:
+    get:
+      summary: Search app data
+      description: Search Users, Subjects, Quizzes, Chapters, and Scores by keywords. Results depend on user role and context.
+      tags: [Search]
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: source
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+
+  /quizview/{sub_id}/{chap_id}:
+    get:
+      summary: Get Subject & Chapter By IDs
+      description: Returns details of specified Subject and Chapter.
+      tags: [Quiz]
+      parameters:
+        - in: path
+          name: sub_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: chap_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subject and chapter details
+        '404':
+          description: Not found
+
+  /questions_page/{quiz_id}:
+    get:
+      summary: Get Questions for Quiz
+      description: Retrieves questions for a quiz, including user and quiz details.
+      tags: [Quiz]
+      parameters:
+        - in: path
+          name: quiz_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Question list
+        '404':
+          description: Not found
+
+  /quiz_submission/{quiz_id}:
+    post:
+      summary: Submit Quiz Answers
+      description: User submits quiz attempt, receives score and confirmation.
+      tags: [Quiz]
+      parameters:
+        - in: path
+          name: quiz_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Submission results
+        '404':
+          description: Not found
+
+  /score_page/{user_id}:
+    get:
+      summary: Get User Scores
+      description: Fetches all quiz scores for a user.
+      tags: [Score]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of scores
+        '400':
+          description: User ID missing
+
+  /summary_page:
+    get:
+      summary: Dashboard Summary
+      description: Get analytics and summary aggregate stats for admin or user leaderboard for user.
+      tags: [Summary]
+      responses:
+        '200':
+          description: Summary data
+        '401':
+          description: Unauthorized
+
+  /export_csv:
+    get:
+      summary: Export CSV Report
+      description: Export platform-wide CSV report (admin only). Returns export job info.
+      tags: [Admin]
+      responses:
+        '200':
+          description: CSV export job started
+
+  /csv_result/{id}:
+    get:
+      summary: Retrieve CSV file
+      description: Get the exported CSV file by async export job ID (admin only).
+      tags: [Admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: CSV file download
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

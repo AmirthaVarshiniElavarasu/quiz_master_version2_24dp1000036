@@ -7,9 +7,9 @@ from .utils import format_report
 from celery import shared_task
 from datetime import datetime
 from .database import db
-import csv,requests,os
+import csv,requests
 from flask import current_app
-import logging
+
 
 
 
@@ -125,7 +125,7 @@ def monthly_report():
     return "Monthly quiz reports sent"
 
 
-logger = logging.getLogger(__name__)
+
 
 
 @shared_task(ignore_results=False, name="daily_reminder")
