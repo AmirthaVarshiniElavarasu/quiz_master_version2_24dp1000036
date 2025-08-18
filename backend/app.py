@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from application.database import db,migrate
 from application.userdb import datastore
@@ -6,13 +6,17 @@ from application.config import LocalDevelopmentConfig
 from flask_security import Security, hash_password
 from datetime import date
 from flask_restful import Api
+import os
 
 
 
 
 def create_app():
 
-    app = Flask(__name__)
+    app = Flask(
+        __name__
+        static_folder="../frontend/dist",  # Vue build output
+        static_url_path="")
     app.config.from_object(LocalDevelopmentConfig)
 
    
@@ -54,15 +58,23 @@ def setup_database(app):
 app= create_app()
 api = Api(app)
 
-
-
-
 from application.routes import *
-
-
-
-
 register_routes(api)
+
+# Serve Vue frontend
+@app.route("/")
+def index():
+    return send_from_directory(app.static_folder, "index.html")
+
+
+# Catch-all for Vue Router history mode
+@app.route("/<path:path>")
+def vue_router(path):
+    file_path = os.path.join(app.static_folder, path)
+    if os.path.isfile(file_path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, "index.html")
 
 if __name__ == '__main__':
     app.run(debug=True)
