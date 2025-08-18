@@ -14,7 +14,7 @@ import os
 def create_app():
 
     app = Flask(
-        __name__
+        __name__,
         static_folder="../frontend/dist",  # Vue build output
         static_url_path="")
     app.config.from_object(LocalDevelopmentConfig)
