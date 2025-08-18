@@ -1,4 +1,4 @@
-from flask import jsonify,request,make_response,send_from_directory
+from flask import jsonify,request,make_response
 from flask_security import auth_required,roles_required,current_user,utils,roles_accepted
 from .database import db
 from .userdb import datastore
@@ -8,9 +8,7 @@ from datetime import datetime,timezone
 from flask_restful import Resource,reqparse
 from sqlalchemy import desc,func
 import calendar
-from celery.result import AsyncResult
-from .tasks import csv_report,daily_reminder
-from .extension import cache
+
 
 # subject
 subject_parser = reqparse.RequestParser()
@@ -160,14 +158,12 @@ class Login(Resource):
 class Logout(Resource):
     @auth_required('token')
     def post(self):
-        cache.clear()
         utils.logout_user()
         return {
             'message':'Logout successful'
         },200
 
 class SubjectResource(Resource):
-    @cache.cached(timeout=300)
     @auth_required('token')
     @roles_required('admin')
     def get(self, sub_id=None):
@@ -221,7 +217,6 @@ class SubjectResource(Resource):
         return {'message': f'Subject {subject.sub_name} deleted successfully'}, 200
 
 class ChapterResource(Resource):
-    @cache.cached(timeout=300)
     @auth_required('token')
     @roles_required('admin')
     def get(self, chap_id=None):
@@ -316,7 +311,6 @@ class QuizResource(Resource):
         )
         db.session.add(new_quiz)
         db.session.commit()
-        daily_reminder.delay()
         return {'message': f"{quiz_title} created successfully."}, 201
 
     @auth_required('token')
@@ -662,7 +656,6 @@ class ScorePage(Resource):
             return {'message': 'User ID is required'}, 400
 
 class SummaryDashboard(Resource):
-    @cache.cached(timeout=600)
     @auth_required('token')
     @roles_accepted('admin', 'user')
     def get(self):
@@ -741,22 +734,7 @@ class SummaryDashboard(Resource):
                 "leaderboard": leaderboard
             })
 
-class ExportCSVReport(Resource):
-    @auth_required('token')
-    @roles_required('admin')
-    def get(self):
-        result= csv_report.delay()
-        return jsonify({
-            "id" : result.id,
-            "result": result.result,
-        })
 
-class CsvResult(Resource):
-    @auth_required('token')
-    @roles_required('admin')
-    def get(self,id):
-        result = AsyncResult(id)
-        return send_from_directory("csv_files", result.result)
 
 
 
@@ -776,8 +754,6 @@ def register_routes(api):
     api.add_resource(QuizSubmission,'/api/quiz_submission/<int:quiz_id>')
     api.add_resource(ScorePage,'/api/score_page/<int:user_id>')
     api.add_resource(SummaryDashboard,'/api/summary_page')
-    api.add_resource(ExportCSVReport,'/api/export_csv')
-    api.add_resource(CsvResult,'/api/csv_result/<string:id>')
-
+   
 
 

@@ -6,9 +6,6 @@ from application.config import LocalDevelopmentConfig
 from flask_security import Security, hash_password
 from datetime import date
 from flask_restful import Api
-from application.celery_init import celery_init_app
-from celery.schedules import crontab
-from application.tasks import monthly_report
 from application.extension import cache
 
 
@@ -18,11 +15,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(LocalDevelopmentConfig)
 
-    app.config['CACHE_TYPE'] = 'RedisCache'
-    app.config['CACHE_REDIS_URL'] = 'redis://localhost:6379/2'
-    app.config['CACHE_DEFAULT_TIMEOUT'] = 300  
-
-    cache.init_app(app) 
+   
     db.init_app(app)
     migrate.init_app(app, db)
 
@@ -60,9 +53,6 @@ def setup_database(app):
     
 app= create_app()
 api = Api(app)
-celery = celery_init_app(app)
-
-celery.autodiscover_tasks()
 
 
 
@@ -70,19 +60,7 @@ celery.autodiscover_tasks()
 from application.routes import *
 
 
-@celery.on_after_finalize.connect 
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(
-        crontab(minute = '*/1'),
-        monthly_report.s(),
-    )
 
-celery.conf.beat_schedule = {
-    'send-daily-reminders': {
-        'task': 'daily_reminder',
-        'schedule': crontab(minute='*'),  
-    },
-}
 
 register_routes(api)
 
