@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
 from application.database import db,migrate
 from application.userdb import datastore
@@ -6,7 +6,7 @@ from application.config import LocalDevelopmentConfig
 from flask_security import Security, hash_password
 from datetime import date
 from flask_restful import Api
-from application.extension import cache
+
 
 
 

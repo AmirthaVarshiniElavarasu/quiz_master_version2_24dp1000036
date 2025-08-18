@@ -1,6 +1,5 @@
 from .database import db
 from .models import Subject,Chapter,Quiz,Scores
-from jinja2 import Template
 import random
 
 
