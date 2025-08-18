@@ -1,8 +1,8 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-from application.database import db,migrate
-from application.userdb import datastore
-from application.config import LocalDevelopmentConfig
+from .application.database import db,migrate
+from .application.userdb import datastore
+from .application.config import LocalDevelopmentConfig
 from flask_security import Security, hash_password
 from datetime import date
 from flask_restful import Api
