@@ -58,7 +58,7 @@ def setup_database(app):
 app= create_app()
 api = Api(app)
 
-from application.routes import *
+from .application.routes import *
 register_routes(api)
 
 # Serve Vue frontend
