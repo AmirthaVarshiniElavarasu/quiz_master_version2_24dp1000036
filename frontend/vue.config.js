@@ -5,7 +5,8 @@ module.exports = {
     index: {
       entry: './main.js',
       template: 'public/index.html',
-      filename: 'index.html'
+      filename: 'index.html',
+      title: 'Quiz Master v2'
     }
   },
   configureWebpack: {
