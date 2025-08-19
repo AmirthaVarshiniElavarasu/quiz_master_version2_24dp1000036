@@ -16,7 +16,7 @@ def create_app():
     app = Flask(
         __name__,
         static_folder="../frontend/dist",  # Vue build output
-        static_url_path="")
+        template_folder="../frontend/dist")
     app.config.from_object(LocalDevelopmentConfig)
 
    
@@ -31,8 +31,7 @@ def create_app():
 
     with app.app_context():
      setup_database(app)
-    
-    app.app_context().push()
+
     return app
 
 def setup_database(app):
@@ -67,14 +66,17 @@ def index():
     return send_from_directory(app.static_folder, "index.html")
 
 
-# Catch-all for Vue Router history mode
+@app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
-def vue_router(path):
+def serve_vue(path):
+    """Serve Vue frontend from dist/"""
     file_path = os.path.join(app.static_folder, path)
-    if os.path.isfile(file_path):
+    if path != "" and os.path.exists(file_path):
         return send_from_directory(app.static_folder, path)
     else:
+        # Always return index.html for Vue Router
         return send_from_directory(app.static_folder, "index.html")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
