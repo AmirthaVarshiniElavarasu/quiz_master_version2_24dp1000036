@@ -71,7 +71,7 @@ export default {
       const token = localStorage.getItem('token');
 
       try {
-        const res = await fetch('http://localhost:5000/api/logout', {
+        const res = await fetch('/api/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export default {
       const token = localStorage.getItem('token'); // adjust if you store token elsewhere
 
       try {
-        const response = await axios.get('http://localhost:5000/api/search', {
+        const response = await axios.get('/api/search', {
           params: {
             q: this.searchQuery,
             source: source,
